@@ -1,0 +1,17 @@
+name: LifeSteal
+version: '1.0.0'
+main: me.honeyberries.lifeSteal.LifeSteal
+api-version: '1.21'
+authors: [ HoneyBerries ]
+commands:
+  heart:
+    aliases: [health, hp, lifesteal, ls, hearts, life]
+    description: Set the number of hearts a player has.
+    usage: /heart <action> <amount>
+    permission: lifesteal.heart
+    permission-message: You don't have permission to use this command.
+
+permissions:
+  lifesteal.heart:
+    description: Allows the use of the /heart command to modify player health.
+    default: op
