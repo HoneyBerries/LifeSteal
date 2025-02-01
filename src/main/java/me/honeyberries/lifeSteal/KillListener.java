@@ -1,6 +1,8 @@
 package me.honeyberries.lifeSteal;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
+import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Monster;
@@ -24,6 +26,10 @@ public class KillListener implements Listener {
     public void onPlayerDeath(@NotNull PlayerDeathEvent event) {
         Player victim = event.getEntity(); // The player who died
         Entity killer = victim.getKiller(); // Entity that caused the death (could be null for natural death)
+
+        World world = victim.getWorld();
+        Boolean keepInventory = world.getGameRuleValue(GameRule.KEEP_INVENTORY);
+        if (Boolean.TRUE.equals(keepInventory)) return;
 
         switch (killer) {
             case null -> {
@@ -52,6 +58,11 @@ public class KillListener implements Listener {
     @EventHandler
     public void onPlayerRespawn(@NotNull PlayerRespawnEvent event) {
         Player player = event.getPlayer();
+
+        World world = player.getWorld();
+        Boolean keepInventory = world.getGameRuleValue(GameRule.KEEP_INVENTORY);
+        if (Boolean.TRUE.equals(keepInventory)) return;
+
         double maxHealth = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue();
 
         // Ensure player's current health is scaled properly after respawn

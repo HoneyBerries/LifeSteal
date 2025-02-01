@@ -8,7 +8,6 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -34,7 +33,7 @@ public class HeartCommand implements TabExecutor {
                     handleSelfHealthCheck(player);
                 } else {
                     sender.sendMessage(ChatColor.RED + "Invalid username! Player not found.");
-                    Bukkit.getLogger().warning("[LifeSteal] Invalid username entered: " + args[0]);
+                    Bukkit.getLogger().log(Level.WARNING, "[LifeSteal] Invalid username entered: " + args[0]);
                 }
             } else if (args.length == 2) {
                 if (sender instanceof Player player) {
@@ -69,16 +68,19 @@ public class HeartCommand implements TabExecutor {
             List<String> playerNames = Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
                     .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()); // Use Collectors.toList() to get a mutable list
 
             List<String> actions = Stream.of("set", "add", "remove")
                     .filter(option -> option.startsWith(args[0].toLowerCase()))
-                    .toList();
+                    .collect(Collectors.toList()); // Use Collectors.toList() to get a mutable list
 
-            playerNames.addAll(actions);
-            return playerNames;
+            actions.addAll(playerNames); // Now this will work since actions is mutable
+
+            return actions;
+
         } else if (args.length == 2) {
             return List.of();
+
         } else if (args.length == 3) {
             return Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
@@ -138,7 +140,10 @@ public class HeartCommand implements TabExecutor {
             return;
         }
         LifeStealHelper.setMaxHealth(player, newHealth);
-        sender.sendMessage(ChatColor.GOLD + player.getName() + "'s max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
+        if (sender != player) {
+            sender.sendMessage(ChatColor.GOLD + player.getName() + "'s max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
+        }
+        player.sendMessage(ChatColor.GOLD + "Your max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
     }
 
     /**
@@ -158,6 +163,10 @@ public class HeartCommand implements TabExecutor {
         }
 
         LifeStealHelper.adjustMaxHealth(player, amount);
-        sender.sendMessage(ChatColor.GOLD + player.getName() + "'s max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
+        if (sender != player) {
+            sender.sendMessage(ChatColor.GOLD + player.getName() + "'s max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
+        }
+        player.sendMessage(ChatColor.GOLD + "Your max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
+
     }
 }
