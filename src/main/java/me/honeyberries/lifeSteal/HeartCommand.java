@@ -23,14 +23,14 @@ public class HeartCommand implements TabExecutor {
         try {
             if (args.length == 0) {
                 if (sender instanceof Player player) {
-                    handleSelfHealthCheck(player);
+                    handleSelfHealthCheck(sender, player);
                 } else {
                     sender.sendMessage(ChatColor.RED + "Only players can use this command without arguments!");
                 }
             } else if (args.length == 1) {
                 Player player = Bukkit.getPlayer(args[0]);
                 if (player != null) {
-                    handleSelfHealthCheck(player);
+                    handleSelfHealthCheck(sender, player);
                 } else {
                     sender.sendMessage(ChatColor.RED + "Invalid username! Player not found.");
                     Bukkit.getLogger().log(Level.WARNING, "[LifeSteal] Invalid username entered: " + args[0]);
@@ -93,11 +93,12 @@ public class HeartCommand implements TabExecutor {
     /**
      * Handles self health check when a player runs /heart.
      *
+     * @param sender The command sender.
      * @param target The player checking their health.
      */
-    private void handleSelfHealthCheck(@NotNull Player target) {
+    private void handleSelfHealthCheck(@NotNull CommandSender sender, @NotNull Player target) {
         double health = LifeStealHelper.getMaxHealth(target);
-        target.sendMessage(ChatColor.GOLD + "You have " + ChatColor.GREEN + health / 2 + ChatColor.GOLD + " maximum hearts!");
+        sender.sendMessage(ChatColor.GOLD + target.getName() + " has" + ChatColor.GREEN + health / 2 + ChatColor.GOLD + " maximum hearts!");
     }
 
     /**
