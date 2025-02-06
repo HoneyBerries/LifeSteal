@@ -45,7 +45,7 @@ public class WithdrawCommand implements CommandExecutor, TabExecutor {
             if (LifeStealHelper.getMaxHealth(player) - 2 * quantity >= 2) {
                 LifeStealHelper.adjustMaxHealth(player, -2 * quantity);
                 // Create the custom "Heart" item with the specified quantity
-                ItemStack heartItem = createHeartItem(quantity);
+                ItemStack heartItem = LifeStealHelper.createHeartItem(quantity);
 
                 // Add the item to the player's inventory
                 player.getInventory().addItem(heartItem);
@@ -73,33 +73,4 @@ public class WithdrawCommand implements CommandExecutor, TabExecutor {
         return Collections.emptyList();
     }
 
-    public ItemStack createHeartItem(int quantity) {
-        // Create the ItemStack with the specified quantity
-        ItemStack heart = new ItemStack(Material.NETHER_STAR, quantity);
-
-        // Get the ItemMeta
-        ItemMeta meta = heart.getItemMeta();
-        if (meta != null) {
-            // Set the display name
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "Heart");
-
-            // Set the lore (description)
-            meta.setLore(Arrays.asList(ChatColor.DARK_PURPLE + "Gives a permanent", ChatColor.DARK_PURPLE + "heart by using it"));
-
-            // Add a harmless enchantment to create a glowing effect
-            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
-
-            // Hide the enchantment details to keep the glow without showing the enchantment
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-
-            // Add custom persistent data to uniquely identify the item
-            NamespacedKey key = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
-            meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "heart");
-
-            // Apply the ItemMeta to the ItemStack
-            heart.setItemMeta(meta);
-        }
-
-        return heart;
-    }
 }

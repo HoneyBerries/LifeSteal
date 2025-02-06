@@ -34,6 +34,7 @@ public class HeartUseListener implements Listener {
 
                 // Increase player's max health by 2 (1 heart), without exceeding the max health
                 LifeStealHelper.adjustMaxHealth(player, 2);
+                player.setHealth(Math.min(player.getHealth() + 2, LifeStealHelper.getMaxHealth(player)));
 
                 // Provide feedback to the player
                 player.sendMessage(ChatColor.GREEN + "You have gained 1 heart!");

@@ -1,9 +1,19 @@
 package me.honeyberries.lifeSteal;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class LifeStealHelper {
 
@@ -49,6 +59,7 @@ public class LifeStealHelper {
     public static void setMaxHealth(@NotNull Player player, double health) {
         double newMaxHealth = Math.max(2.0, health); // Minimum of 1 heart
         player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(newMaxHealth);
+        player.setHealth(Math.min(player.getHealth(), newMaxHealth));
     }
 
     /**
@@ -59,5 +70,44 @@ public class LifeStealHelper {
      */
     public static double getMaxHealth(@NotNull Player player) {
         return player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue();
+    }
+
+    /**
+     * Creates a custom "Heart" item represented by a Nether Star with unique properties.
+     * <p>
+     * This item is designed to be used in a lifesteal plugin, granting players a permanent heart upon use.
+     * It features a custom display name, lore, a glowing effect, and unique metadata to distinguish it from regular Nether Stars.
+     *
+     * @param quantity The number of "Heart" items to create.
+     * @return An ItemStack representing the custom "Heart" item with the specified quantity.
+     */
+    public static ItemStack createHeartItem(int quantity) {
+        // Create the ItemStack with the specified quantity
+        ItemStack heart = new ItemStack(Material.NETHER_STAR, quantity);
+
+        // Get the ItemMeta
+        ItemMeta meta = heart.getItemMeta();
+        if (meta != null) {
+            // Set the display name
+            meta.setDisplayName(ChatColor.DARK_PURPLE + "Heart");
+
+            // Set the lore (description)
+            meta.setLore(Arrays.asList(ChatColor.DARK_PURPLE + "Gives a permanent", ChatColor.DARK_PURPLE + "heart by using it"));
+
+            // Add a harmless enchantment to create a glowing effect
+            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+
+            // Hide the enchantment details to keep the glow without showing the enchantment
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+
+            // Add custom persistent data to uniquely identify the item
+            NamespacedKey key = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
+            meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "heart");
+
+            // Apply the ItemMeta to the ItemStack
+            heart.setItemMeta(meta);
+        }
+
+        return heart;
     }
 }
