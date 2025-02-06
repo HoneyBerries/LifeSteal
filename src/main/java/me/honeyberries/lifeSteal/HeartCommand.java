@@ -98,7 +98,7 @@ public class HeartCommand implements TabExecutor {
      */
     private void handleSelfHealthCheck(@NotNull CommandSender sender, @NotNull Player target) {
         double health = LifeStealHelper.getMaxHealth(target);
-        sender.sendMessage(ChatColor.GOLD + target.getName() + " has" + ChatColor.GREEN + health / 2 + ChatColor.GOLD + " maximum hearts!");
+        sender.sendMessage(ChatColor.GOLD + target.getName() + " has " + ChatColor.GREEN + health / 2 + ChatColor.GOLD + " maximum hearts!");
     }
 
     /**

@@ -1,6 +1,7 @@
 package me.honeyberries.lifeSteal;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 public final class LifeSteal extends JavaPlugin {
 
@@ -9,8 +10,9 @@ public final class LifeSteal extends JavaPlugin {
         // Plugin startup logic
         getLogger().info("LifeSteal has been enabled! Life is much harder now!");
         getServer().getPluginManager().registerEvents(new KillListener(), this);
+        getServer().getPluginManager().registerEvents(new HeartUseListener(), this);
         getServer().getPluginCommand("heart").setExecutor(new HeartCommand());
-
+        getServer().getPluginCommand("withdraw").setExecutor(new WithdrawCommand());
     }
 
     @Override
@@ -19,9 +21,8 @@ public final class LifeSteal extends JavaPlugin {
         getLogger().info("LifeSteal has been disabled!");
     }
 
-    public static LifeSteal getInstance() {
+    public static @NotNull LifeSteal getInstance() {
         return getPlugin(LifeSteal.class);
     }
-
 
 }

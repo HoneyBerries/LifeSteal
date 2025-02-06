@@ -10,7 +10,12 @@ commands:
     usage: /heart <action> <amount> <player (optional)>
     permission: lifesteal.heart
     permission-message: Sorry, you don't have permission to adjust player health!.
-
+  withdraw:
+    aliases: [wd, draw]
+    description: Lets you withdraw hearts.
+    usage: /withdraw <amount>
+    permission: lifesteal.withdraw
+    permission-message: Sorry, you can't withdraw hearts!
 permissions:
   lifesteal.heart:
     description: Allows the use of the /heart command to modify player health.
@@ -18,3 +23,6 @@ permissions:
   lifesteal.edit:
     description: Allows modification of the lifesteal configuration
     default: op
+  lifesteal.withdraw:
+    description: Lets you withdraw hearts using /withdraw
+    default: true
