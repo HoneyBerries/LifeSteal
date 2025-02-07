@@ -12,10 +12,13 @@ public final class LifeSteal extends JavaPlugin {
 
         // Register event listeners to handle specific in-game events
         // KillListener handles events related to player kills (e.g., stealing hearts)
-        getServer().getPluginManager().registerEvents(new KillListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
 
-        // HeartUseListener handles events when players use the custom Heart item
-        getServer().getPluginManager().registerEvents(new HeartUseListener(), this);
+        // HeartUsageListener handles events when players use the custom Heart item
+        getServer().getPluginManager().registerEvents(new HeartUsageListener(), this);
+
+        //Register the heart recipe discovery so when a player picks up a totem, they get the heart recipe
+        getServer().getPluginManager().registerEvents(new HeartRecipeDiscovery(), this);
 
         // Register the /heart command and link it to the HeartCommand class
         getServer().getPluginCommand("heart").setExecutor(new HeartCommand());

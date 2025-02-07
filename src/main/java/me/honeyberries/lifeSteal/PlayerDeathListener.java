@@ -13,7 +13,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class KillListener implements Listener {
+public class PlayerDeathListener implements Listener {
 
     /**
      * Handles the event when a player dies. Adjusts the player's max health based on the cause of death.

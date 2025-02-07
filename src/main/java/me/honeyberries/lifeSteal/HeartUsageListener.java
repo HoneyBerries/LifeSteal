@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
-public class HeartUseListener implements Listener {
+public class HeartUsageListener implements Listener {
 
     @EventHandler
     public void onPlayerUseHeart(PlayerInteractEvent event) {
