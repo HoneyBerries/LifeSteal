@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class WithdrawCommand implements CommandExecutor, TabExecutor {
@@ -48,7 +49,12 @@ public class WithdrawCommand implements CommandExecutor, TabExecutor {
                 ItemStack heartItem = LifeStealHelper.createHeartItem(quantity);
 
                 // Add the item to the player's inventory
-                player.getInventory().addItem(heartItem);
+                HashMap<Integer, ItemStack> remainingItems = player.getInventory().addItem(heartItem);
+
+                // Drop remaining items if inventory is full
+                for (ItemStack item : remainingItems.values()) {
+                    player.getWorld().dropItemNaturally(player.getLocation(), item);
+                }
 
                 // Send the message to the player
                 player.sendMessage(ChatColor.GOLD + "You have withdrawn " + ChatColor.GREEN + quantity + ChatColor.GOLD + " Heart" + (quantity > 1 ? "s" : "") + ".");

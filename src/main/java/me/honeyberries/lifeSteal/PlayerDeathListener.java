@@ -13,6 +13,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.logging.Logger;
+
 public class PlayerDeathListener implements Listener {
 
     /**

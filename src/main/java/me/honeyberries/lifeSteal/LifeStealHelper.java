@@ -110,4 +110,31 @@ public class LifeStealHelper {
 
         return heart;
     }
+
+    /**
+     * Checks if the given {@link ItemStack} is a custom Heart item.
+     *
+     * This method verifies that the item is a {@link Material#NETHER_STAR} and contains
+     * a unique persistent data key ("unique_heart_id") with the value "heart".
+     * This ensures accurate identification even if the item's name or lore has been modified.
+     *
+     * @param item The {@link ItemStack} to check (can be null).
+     * @return {@code true} if the item is a custom Heart, {@code false} otherwise.
+     */
+    public static boolean isHeartItem(ItemStack item) {
+        if (item == null || item.getType() != Material.NETHER_STAR) {
+            return false; // Not a Nether Star, can't be a Heart
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return false;
+        }
+
+        // Check for the unique persistent data
+        NamespacedKey key = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
+        String identifier = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+
+        return "heart".equals(identifier);
+    }
 }
