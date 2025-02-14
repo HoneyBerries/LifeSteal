@@ -33,7 +33,7 @@ public class HeartCommand implements TabExecutor {
                     handleSelfHealthCheck(sender, player);
                 } else {
                     sender.sendMessage(ChatColor.RED + "Invalid username! Player not found.");
-                    LifeSteal.getInstance().getLogger().log(Level.WARNING, "[LifeSteal] Invalid username entered: " + args[0]);
+                    LifeSteal.getInstance().getLogger().log(Level.WARNING, "Invalid username entered: " + args[0]);
                 }
             } else if (args.length == 2) {
                 if (sender instanceof Player player) {
@@ -47,14 +47,14 @@ public class HeartCommand implements TabExecutor {
                     handleHealthModification(sender, player, args);
                 } else {
                     sender.sendMessage(ChatColor.RED + "Invalid username! Player not found.");
-                    LifeSteal.getInstance().getLogger().warning("[LifeSteal] Invalid username entered: " + args[2]);
+                    LifeSteal.getInstance().getLogger().warning("Invalid username entered: " + args[2]);
                 }
             } else {
                 sender.sendMessage(ChatColor.RED + "Invalid usage! Try /heart [set|add|remove] <amount>");
             }
         } catch (Exception e) {
             sender.sendMessage(ChatColor.RED + "An error occurred while executing the command.");
-            LifeSteal.getInstance().getLogger().log(Level.SEVERE, "[LifeSteal] Error executing /heart command", e);
+            LifeSteal.getInstance().getLogger().log(Level.SEVERE, "Error executing /heart command", e);
         }
         return true;
     }
@@ -121,10 +121,10 @@ public class HeartCommand implements TabExecutor {
             }
         } catch (NumberFormatException e) {
             sender.sendMessage(ChatColor.RED + "Invalid number! Use: /heart [set|add|remove] <amount>");
-            LifeSteal.getInstance().getLogger().warning("[LifeSteal] Invalid number format: " + args[1]);
+            LifeSteal.getInstance().getLogger().warning("Invalid number format: " + args[1]);
         } catch (Exception e) {
             sender.sendMessage(ChatColor.RED + "An error occurred while modifying health.");
-            LifeSteal.getInstance().getLogger().log(Level.SEVERE, "[LifeSteal] Error modifying health", e);
+            LifeSteal.getInstance().getLogger().log(Level.SEVERE, "Error modifying health", e);
         }
     }
 

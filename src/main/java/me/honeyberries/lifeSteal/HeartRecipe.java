@@ -13,7 +13,7 @@ public class HeartRecipe {
         // Define the recipe's namespaced key1
         NamespacedKey key1 = new NamespacedKey(LifeSteal.getInstance(), "custom_heart1");
 
-        // Create a shaped recipe for the "Heart" item. 2 recipes for different orientations
+        // Create a shaped recipe for the "Heart" item
         ShapedRecipe heartRecipe1 = new ShapedRecipe(key1, LifeStealHelper.createHeartItem(1));
 
         // Define the shape of the recipe
@@ -23,7 +23,7 @@ public class HeartRecipe {
         heartRecipe1.setIngredient('D', Material.DIAMOND_BLOCK);
         heartRecipe1.setIngredient('R', Material.REDSTONE_BLOCK);
         heartRecipe1.setIngredient('T', Material.TOTEM_OF_UNDYING);
-        heartRecipe1.setIngredient('G', Material.GOLD_INGOT);
+        heartRecipe1.setIngredient('G', Material.GOLD_BLOCK);
         heartRecipe1.setIngredient('I', Material.IRON_BLOCK);
 
         // Register the recipe with the server

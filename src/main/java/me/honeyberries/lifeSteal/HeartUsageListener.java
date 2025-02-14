@@ -32,12 +32,11 @@ public class HeartUsageListener implements Listener {
             if (dataContainer.has(key, PersistentDataType.STRING) && "heart".equals(dataContainer.get(key, PersistentDataType.STRING))) {
                 event.setCancelled(true); // Prevent default interaction behavior
 
-                // Increase player's max health by 2 (1 heart), without exceeding the max health
+                // Increase player's max health by 2 (1 heart)
                 LifeStealHelper.adjustMaxHealth(player, 2);
-                player.setHealth(Math.min(player.getHealth() + 2, LifeStealHelper.getMaxHealth(player)));
 
                 // Provide feedback to the player
-                player.sendMessage(ChatColor.GREEN + "You have gained 1 heart!");
+                player.sendMessage(ChatColor.GREEN + "You have gained a heart!");
                 player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
 
                 // Consume one "Heart" item

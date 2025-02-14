@@ -95,10 +95,9 @@ public class LifeStealHelper {
             meta.setLore(Arrays.asList(ChatColor.DARK_PURPLE + "Gives a permanent", ChatColor.DARK_PURPLE + "heart by using it"));
 
             // Add a harmless enchantment to create a glowing effect
-            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            meta.addEnchant(Enchantment.MENDING, 1, true);
 
             // Hide the enchantment details to keep the glow without showing the enchantment
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
             // Add custom persistent data to uniquely identify the item
             NamespacedKey key = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
