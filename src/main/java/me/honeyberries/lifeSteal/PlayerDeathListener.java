@@ -35,18 +35,18 @@ public class PlayerDeathListener implements Listener {
 
         switch (killer) {
             case null -> {
-                Bukkit.getLogger().info(victim.getName() + " lost a heart due to natural causes.");
+                LifeSteal.getInstance().getLogger().info(victim.getName() + " lost a heart due to natural causes.");
                 LifeStealHelper.adjustMaxHealth(victim, -2);
             }
             case Monster monster -> {
-                Bukkit.getLogger().info(victim.getName() + " lost a heart due to a " + monster.getType().name().toLowerCase().replace("_", " "));
+                LifeSteal.getInstance().getLogger().info(victim.getName() + " lost a heart due to a " + monster.getType().name().toLowerCase().replace("_", " "));
                 LifeStealHelper.adjustMaxHealth(victim, -2);
             }
             case Player murderer -> {
-                Bukkit.getLogger().info(victim.getName() + " lost a heart due to " + murderer.getName());
+                LifeSteal.getInstance().getLogger().info(victim.getName() + " lost a heart due to " + murderer.getName());
                 LifeStealHelper.swapHeart(murderer, victim);
             }
-            default -> Bukkit.getLogger().info("Something went wrong with the life stealer!");
+            default -> LifeSteal.getInstance().getLogger().info("Something went wrong with the life stealer!");
         }
     }
 

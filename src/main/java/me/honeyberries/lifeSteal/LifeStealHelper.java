@@ -30,9 +30,9 @@ public class LifeStealHelper {
         if (loserMaxHealth > 2.0) {
             adjustMaxHealth(loser, -2.0);
             adjustMaxHealth(gainer, 2.0);
-            Bukkit.getLogger().info(loser.getName() + " lost 1 heart, and " + gainer.getName() + " gained 1 heart!");
+            LifeSteal.getInstance().getLogger().info(loser.getName() + " lost 1 heart, and " + gainer.getName() + " gained 1 heart!");
         } else {
-            Bukkit.getLogger().info("Swap failed: " + loser.getName() + " does not have enough hearts to lose.");
+            LifeSteal.getInstance().getLogger().info("Swap failed: " + loser.getName() + " does not have enough hearts to lose.");
         }
     }
 
