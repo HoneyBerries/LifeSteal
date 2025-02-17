@@ -11,7 +11,7 @@ public class HeartRecipe {
         // Craft the custom "Heart" item
 
         // Define the recipe's namespaced key1
-        NamespacedKey key1 = new NamespacedKey(LifeSteal.getInstance(), "custom_heart1");
+        NamespacedKey key1 = new NamespacedKey(LifeSteal.getInstance(), "custom_heart_recipe1");
 
         // Create a shaped recipe for the "Heart" item
         ShapedRecipe heartRecipe1 = new ShapedRecipe(key1, LifeStealHelper.createHeartItem(1));

@@ -1,19 +1,18 @@
 package me.honeyberries.lifeSteal;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class LifeStealHelper {
 
@@ -58,7 +57,7 @@ public class LifeStealHelper {
      */
     public static void setMaxHealth(@NotNull Player player, double health) {
         double newMaxHealth = Math.max(2.0, health); // Minimum of 1 heart
-        player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(newMaxHealth);
+        Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(newMaxHealth);
         player.setHealth(Math.min(player.getHealth(), newMaxHealth));
     }
 
@@ -69,7 +68,7 @@ public class LifeStealHelper {
      * @return The player's max health.
      */
     public static double getMaxHealth(@NotNull Player player) {
-        return player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue();
+        return Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getBaseValue();
     }
 
     /**
@@ -100,8 +99,8 @@ public class LifeStealHelper {
             // Hide the enchantment details to keep the glow without showing the enchantment
 
             // Add custom persistent data to uniquely identify the item
-            NamespacedKey key = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
-            meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, "heart");
+            NamespacedKey heartIDKey = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
+            meta.getPersistentDataContainer().set(heartIDKey, PersistentDataType.STRING, "heart");
 
             // Apply the ItemMeta to the ItemStack
             heart.setItemMeta(meta);
@@ -112,7 +111,7 @@ public class LifeStealHelper {
 
     /**
      * Checks if the given {@link ItemStack} is a custom Heart item.
-     *
+     * <p>
      * This method verifies that the item is a {@link Material#NETHER_STAR} and contains
      * a unique persistent data key ("unique_heart_id") with the value "heart".
      * This ensures accurate identification even if the item's name or lore has been modified.

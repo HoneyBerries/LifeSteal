@@ -6,6 +6,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 /**
  * Handles the automatic discovery of heart crafting recipes in the LifeSteal plugin.
@@ -68,8 +69,8 @@ public class HeartRecipeDiscovery {
      * @param player The player who should discover the recipes
      */
     private static void discoverRecipe(Player player) {
-        NamespacedKey key1 = new NamespacedKey(LifeSteal.getInstance(), "custom_heart1");
+        NamespacedKey recipeKey1 = new NamespacedKey(LifeSteal.getInstance(), "custom_heart_recipe1");
 
-        player.discoverRecipe(key1);
+        player.discoverRecipe(recipeKey1);
     }
 }

@@ -13,6 +13,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.logging.Logger;
 
 public class PlayerDeathListener implements Listener {
@@ -65,7 +66,7 @@ public class PlayerDeathListener implements Listener {
         Boolean keepInventory = world.getGameRuleValue(GameRule.KEEP_INVENTORY);
         if (Boolean.TRUE.equals(keepInventory)) return;
 
-        double maxHealth = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue();
+        double maxHealth = Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getBaseValue();
 
         // Ensure player's current health is scaled properly after respawn
         player.setHealth(Math.max(1.0, Math.min(player.getHealth(), maxHealth))); // Set health to at least 0.5 hearts but not exceed max health
