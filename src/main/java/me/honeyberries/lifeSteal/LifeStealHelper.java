@@ -56,9 +56,8 @@ public class LifeStealHelper {
      * @param health The new max health value.
      */
     public static void setMaxHealth(@NotNull Player player, double health) {
-        double newMaxHealth = Math.max(2.0, health); // Minimum of 1 heart
+        double newMaxHealth = Math.max(2.0, health);
         Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(newMaxHealth);
-        player.setHealth(Math.min(player.getHealth(), newMaxHealth));
     }
 
     /**

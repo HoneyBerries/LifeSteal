@@ -32,7 +32,7 @@ public class PlayerDeathListener implements Listener {
 
         World world = victim.getWorld();
         Boolean keepInventory = world.getGameRuleValue(GameRule.KEEP_INVENTORY);
-        if (Boolean.TRUE.equals(keepInventory)) return;
+        //if (Boolean.TRUE.equals(keepInventory)) return;
 
         switch (killer) {
             case null -> {
@@ -68,7 +68,7 @@ public class PlayerDeathListener implements Listener {
 
         double maxHealth = Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getBaseValue();
 
-        // Ensure player's current health is scaled properly after respawn
-        player.setHealth(Math.max(1.0, Math.min(player.getHealth(), maxHealth))); // Set health to at least 0.5 hearts but not exceed max health
+        //Ensure player's current health is scaled properly after respawn
+        player.setHealth(Math.max(1, Math.min(player.getHealth(), maxHealth))); // Set health to at least 0.5 hearts but not exceed max health
     }
 }
