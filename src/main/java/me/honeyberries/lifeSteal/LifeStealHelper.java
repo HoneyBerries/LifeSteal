@@ -1,6 +1,7 @@
 package me.honeyberries.lifeSteal;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -87,10 +88,11 @@ public class LifeStealHelper {
         ItemMeta meta = heart.getItemMeta();
         if (meta != null) {
             // Set the display name
-            meta.setDisplayName(ChatColor.DARK_PURPLE + "Heart");
+            meta.displayName(Component.text("Heart").color(NamedTextColor.DARK_PURPLE));
 
             // Set the lore (description)
-            meta.setLore(Arrays.asList(ChatColor.DARK_PURPLE + "Gives a permanent", ChatColor.DARK_PURPLE + "heart by using it"));
+            meta.lore(Arrays.asList(Component.text("Gives a permanent").color(NamedTextColor.DARK_PURPLE),
+                    Component.text("heart by using it").color(NamedTextColor.DARK_PURPLE)));
 
             // Add a harmless enchantment to create a glowing effect
             meta.addEnchant(Enchantment.MENDING, 1, true);
@@ -118,6 +120,7 @@ public class LifeStealHelper {
      * @param item The {@link ItemStack} to check (can be null).
      * @return {@code true} if the item is a custom Heart, {@code false} otherwise.
      */
+
     public static boolean isHeartItem(ItemStack item) {
         if (item == null || item.getType() != Material.NETHER_STAR) {
             return false; // Not a Nether Star, can't be a Heart

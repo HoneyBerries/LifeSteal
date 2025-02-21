@@ -1,6 +1,5 @@
 package me.honeyberries.lifeSteal;
 
-import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
@@ -14,7 +13,6 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
-import java.util.logging.Logger;
 
 public class PlayerDeathListener implements Listener {
 
@@ -32,7 +30,7 @@ public class PlayerDeathListener implements Listener {
 
         World world = victim.getWorld();
         Boolean keepInventory = world.getGameRuleValue(GameRule.KEEP_INVENTORY);
-        //if (Boolean.TRUE.equals(keepInventory)) return;
+        if (Boolean.TRUE.equals(keepInventory)) return;
 
         switch (killer) {
             case null -> {

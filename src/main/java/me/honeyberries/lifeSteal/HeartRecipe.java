@@ -5,12 +5,23 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ShapedRecipe;
 
+/**
+ * Registers the custom crafting recipe for the "Heart" item.
+ * This recipe allows players to craft a "Heart" using various materials.
+ */
 public class HeartRecipe {
 
+    /**
+     * Registers the custom crafting recipe for the "Heart" item.
+     * The recipe requires:
+     * - Diamond Block (D)
+     * - Redstone Block (R)
+     * - Totem of Undying (T)
+     * - Gold Block (G)
+     * - Iron Block (I)
+     */
     public static void registerHeartRecipe() {
-        // Craft the custom "Heart" item
-
-        // Define the recipe's namespaced key1
+        // Define the recipe's namespaced key
         NamespacedKey key1 = new NamespacedKey(LifeSteal.getInstance(), "custom_heart_recipe1");
 
         // Create a shaped recipe for the "Heart" item
@@ -29,5 +40,4 @@ public class HeartRecipe {
         // Register the recipe with the server
         Bukkit.addRecipe(heartRecipe1);
     }
-
 }

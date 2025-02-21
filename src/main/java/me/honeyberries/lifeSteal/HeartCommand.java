@@ -1,7 +1,8 @@
 package me.honeyberries.lifeSteal;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -25,35 +26,35 @@ public class HeartCommand implements TabExecutor {
                 if (sender instanceof Player player) {
                     handleSelfHealthCheck(sender, player);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Only players can use this command without arguments!");
+                    sender.sendMessage(Component.text("Only players can use this command without arguments!").color(NamedTextColor.RED));
                 }
             } else if (args.length == 1) {
                 Player player = Bukkit.getPlayer(args[0]);
                 if (player != null) {
                     handleSelfHealthCheck(sender, player);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Invalid username! Player not found.");
+                    sender.sendMessage(Component.text("Invalid username! Player not found.").color(NamedTextColor.RED));
                     LifeSteal.getInstance().getLogger().log(Level.WARNING, "Invalid username entered: " + args[0]);
                 }
             } else if (args.length == 2) {
                 if (sender instanceof Player player) {
                     handleHealthModification(sender, player, args);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Only players can use this command without a player argument!");
+                    sender.sendMessage(Component.text("Only players can use this command without a player argument!").color(NamedTextColor.RED));
                 }
             } else if (args.length == 3) {
                 Player player = Bukkit.getPlayer(args[2]);
                 if (player != null) {
                     handleHealthModification(sender, player, args);
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Invalid username! Player not found.");
+                    sender.sendMessage(Component.text("Invalid username! Player not found.").color(NamedTextColor.RED));
                     LifeSteal.getInstance().getLogger().warning("Invalid username entered: " + args[2]);
                 }
             } else {
-                sender.sendMessage(ChatColor.RED + "Invalid usage! Try /heart [set|add|remove] <amount>");
+                sender.sendMessage(Component.text("Invalid usage! Try /heart [set|add|remove] <amount>").color(NamedTextColor.RED));
             }
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "An error occurred while executing the command.");
+            sender.sendMessage(Component.text("An error occurred while executing the command.").color(NamedTextColor.RED));
             LifeSteal.getInstance().getLogger().log(Level.SEVERE, "Error executing /heart command", e);
         }
         return true;
@@ -65,22 +66,16 @@ public class HeartCommand implements TabExecutor {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> playerNames = Bukkit.getOnlinePlayers().stream()
-                    .map(Player::getName)
-                    .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList()); // Use Collectors.toList() to get a mutable list
-
-            List<String> actions = Stream.of("set", "add", "remove")
-                    .filter(option -> option.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList()); // Use Collectors.toList() to get a mutable list
-
-            actions.addAll(playerNames); // Now this will work since actions is mutable
-
-            return actions;
+            return Stream.concat(
+                    Bukkit.getOnlinePlayers().stream()
+                            .map(Player::getName)
+                            .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase())),
+                    Stream.of("set", "add", "remove")
+                            .filter(option -> option.startsWith(args[0].toLowerCase()))
+            ).toList();
 
         } else if (args.length == 2) {
             return List.of();
-
         } else if (args.length == 3) {
             return Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
@@ -98,7 +93,8 @@ public class HeartCommand implements TabExecutor {
      */
     private void handleSelfHealthCheck(@NotNull CommandSender sender, @NotNull Player target) {
         double health = LifeStealHelper.getMaxHealth(target);
-        sender.sendMessage(ChatColor.GOLD + target.getName() + " has " + ChatColor.GREEN + health / 2 + ChatColor.GOLD + " maximum hearts!");
+        sender.sendMessage(Component.text(target.getName() + " has " + health / 2 + " maximum hearts!").color(NamedTextColor.GOLD)
+                .append(Component.text(" (" + health / 2 + " hearts)").color(NamedTextColor.GREEN)));
     }
 
     /**
@@ -117,13 +113,13 @@ public class HeartCommand implements TabExecutor {
                 case "set" -> setHealth(sender, target, amount);
                 case "add" -> adjustHealth(sender, target, amount);
                 case "remove" -> adjustHealth(sender, target, -amount);
-                default -> sender.sendMessage(ChatColor.RED + "Unknown action! Use: set, add, or remove!");
+                default -> sender.sendMessage(Component.text("Unknown action! Use: set, add, or remove!").color(NamedTextColor.RED));
             }
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid number! Use: /heart [set|add|remove] <amount>");
+            sender.sendMessage(Component.text("Invalid number! Use: /heart [set|add|remove] <amount>").color(NamedTextColor.RED));
             LifeSteal.getInstance().getLogger().warning("Invalid number format: " + args[1]);
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "An error occurred while modifying health.");
+            sender.sendMessage(Component.text("An error occurred while modifying health.").color(NamedTextColor.RED));
             LifeSteal.getInstance().getLogger().log(Level.SEVERE, "Error modifying health", e);
         }
     }
@@ -137,14 +133,15 @@ public class HeartCommand implements TabExecutor {
      */
     public void setHealth(@NotNull CommandSender sender, @NotNull Player player, double newHealth) {
         if (newHealth < 2) {
-            sender.sendMessage(ChatColor.RED + "Health must be at least 1 heart!");
+            sender.sendMessage(Component.text("Health must be at least 1 heart!").color(NamedTextColor.RED));
             return;
         }
         LifeStealHelper.setMaxHealth(player, newHealth);
         if (sender != player) {
-            sender.sendMessage(ChatColor.GOLD + player.getName() + "'s max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
+            sender.sendMessage(Component.text(player.getName() + "'s max health is now " + LifeStealHelper.getMaxHealth(player) / 2 + " hearts!").color(NamedTextColor.GOLD)
+                    .append(Component.text(" (Set to " + LifeStealHelper.getMaxHealth(player) / 2 + " hearts)").color(NamedTextColor.GREEN)));
         }
-        player.sendMessage(ChatColor.GOLD + "Your max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
+        player.sendMessage(Component.text("Your max health is now " + LifeStealHelper.getMaxHealth(player) / 2 + " hearts!").color(NamedTextColor.GOLD));
     }
 
     /**
@@ -159,15 +156,15 @@ public class HeartCommand implements TabExecutor {
         double newHealth = currentHealth + amount;
 
         if (newHealth < 2) {
-            sender.sendMessage(ChatColor.RED + "You can't have less than 1 heart!");
+            sender.sendMessage(Component.text("You can't have less than 1 heart!").color(NamedTextColor.RED));
             return;
         }
 
         LifeStealHelper.adjustMaxHealth(player, amount);
         if (sender != player) {
-            sender.sendMessage(ChatColor.GOLD + player.getName() + "'s max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
+            sender.sendMessage(Component.text(player.getName() + "'s max health is now " + LifeStealHelper.getMaxHealth(player) / 2 + " hearts!").color(NamedTextColor.GOLD)
+                    .append(Component.text(" (Adjusted by " + amount / 2 + " hearts)").color(NamedTextColor.GREEN)));
         }
-        player.sendMessage(ChatColor.GOLD + "Your max health is now " + ChatColor.GREEN + LifeStealHelper.getMaxHealth(player) / 2 + ChatColor.GOLD + " hearts!");
-
+        player.sendMessage(Component.text("Your max health is now " + LifeStealHelper.getMaxHealth(player) / 2 + " hearts!").color(NamedTextColor.GOLD));
     }
 }
