@@ -168,3 +168,7 @@ public class HeartCommand implements TabExecutor {
         player.sendMessage(Component.text("Your max health is now " + LifeStealHelper.getMaxHealth(player) / 2 + " hearts!").color(NamedTextColor.GOLD));
     }
 }
+
+    /**
+     just changing to test rn
+     */
