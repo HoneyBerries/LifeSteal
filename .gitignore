@@ -1,2 +1,49 @@
-# Project exclude paths
+# Maven target directory
 /target/
+
+# IntelliJ IDEA project files
+/.idea/
+/*.iml
+
+# Logs
+*.log
+
+# Compiled class files
+*.class
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Git-specific files
+*.orig
+
+# Maven-specific files
+.mvn/
+.settings/
+dependency-reduced-pom.xml
+
+# Generated files
+generated-sources/
+generated-test-sources/
+
+# Test output
+/test-output/
+
+# Coverage reports
+/coverage/
+*.exec
+
+# Build tools
+/.gradle/
+/build/
