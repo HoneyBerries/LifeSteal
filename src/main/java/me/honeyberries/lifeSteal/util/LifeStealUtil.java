@@ -1,5 +1,7 @@
-package me.honeyberries.lifeSteal;
+package me.honeyberries.lifeSteal.util;
 
+import me.honeyberries.lifeSteal.LifeSteal;
+import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
@@ -11,32 +13,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
-public class LifeStealHelper {
-
-    /**
-     * Swaps one heart (2 health points) from one player to another.
-     *
-     * @param gainer The player gaining the heart.
-     * @param loser  The player losing the heart.
-     */
-    public static void swapHeart(@NotNull Player gainer, @NotNull Player loser) {
-        double loserMaxHealth = getMaxHealth(loser);
-
-        // Ensure the loser has at least 2 hearts to give
-        if (loserMaxHealth > 2.0) {
-            adjustMaxHealth(loser, -2.0);
-            adjustMaxHealth(gainer, 2.0);
-            LifeSteal.getInstance().getLogger().info(loser.getName() + " lost 1 heart, and " + gainer.getName() + " gained 1 heart!");
-        } else {
-            LifeSteal.getInstance().getLogger().info("Swap failed: " + loser.getName() + " does not have enough hearts to lose.");
-        }
-    }
-
-    /**
+public class LifeStealUtil {
+        /**
      * Adjusts the player's max health by the specified amount.
      * Ensures the player's health does not fall below 2.0 (1 heart).
      *
@@ -45,10 +26,10 @@ public class LifeStealHelper {
      */
     public static void adjustMaxHealth(@NotNull Player player, double amount) {
         double currentMaxHealth = getMaxHealth(player);
-        double newMaxHealth = Math.max(2.0, currentMaxHealth + amount); // Minimum of 1 heart
+        double newMaxHealth = Math.max(2.0, currentMaxHealth + amount); // Minimum of 2 health (1 heart)
         setMaxHealth(player, newMaxHealth);
-    }
 
+    }
     /**
      * Sets the player's max health to a specific value.
      * Ensures the player's health does not fall below 2.0 (1 heart).
@@ -57,6 +38,7 @@ public class LifeStealHelper {
      * @param health The new max health value.
      */
     public static void setMaxHealth(@NotNull Player player, double health) {
+        // Ensure the health is at least 2.0 (1 heart)
         double newMaxHealth = Math.max(2.0, health);
         Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(newMaxHealth);
     }
@@ -82,17 +64,24 @@ public class LifeStealHelper {
      */
     public static ItemStack createHeartItem(int quantity) {
         // Create the ItemStack with the specified quantity
-        ItemStack heart = new ItemStack(Material.NETHER_STAR, quantity);
+        Material material = Material.matchMaterial(LifeStealSettings.getHeartItemID());
+
+        assert material != null;
+        ItemStack heart = new ItemStack(material, quantity);
 
         // Get the ItemMeta
         ItemMeta meta = heart.getItemMeta();
         if (meta != null) {
             // Set the display name
-            meta.displayName(Component.text("Heart").color(NamedTextColor.DARK_PURPLE));
+            meta.displayName(Component.text(LifeStealSettings.getHeartItemName()).color(NamedTextColor.DARK_PURPLE));
 
             // Set the lore (description)
-            meta.lore(Arrays.asList(Component.text("Gives a permanent").color(NamedTextColor.DARK_PURPLE),
-                    Component.text("heart by using it").color(NamedTextColor.DARK_PURPLE)));
+            meta.lore(List.of(
+                    Component.text(String.format("Gives %.1f permanent %s",
+                            LifeStealSettings.getHealthPerItem() / 2.0,
+                            LifeStealSettings.getHealthPerItem() > 1 ? "hearts" : "heart"))
+                            .color(NamedTextColor.DARK_PURPLE)
+            ));
 
             // Add a harmless enchantment to create a glowing effect
             meta.addEnchant(Enchantment.MENDING, 1, true);
@@ -138,3 +127,4 @@ public class LifeStealHelper {
         return "heart".equals(identifier);
     }
 }
+

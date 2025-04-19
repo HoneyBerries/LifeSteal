@@ -1,63 +1,96 @@
 package me.honeyberries.lifeSteal;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import me.honeyberries.lifeSteal.command.HeartCommand;
+import me.honeyberries.lifeSteal.command.LifeStealCommand;
+import me.honeyberries.lifeSteal.command.WithdrawCommand;
+import me.honeyberries.lifeSteal.config.LifeStealSettings;
+import me.honeyberries.lifeSteal.listener.HeartUsageListener;
+import me.honeyberries.lifeSteal.listener.PlayerDeathListener;
+import me.honeyberries.lifeSteal.task.HeartRecipeDiscoveryTask;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
  * The main class for the LifeSteal plugin.
- * This plugin handles the LifeSteal mechanics, where players can steal hearts and craft heart items.
- * It includes functionality for player deaths, item usage, crafting recipes, and heart withdrawals.
+ * This plugin implements mechanics for stealing hearts, crafting heart items, and managing player health.
  */
 public final class LifeSteal extends JavaPlugin {
 
-    private BukkitTask invScanTask;
+    private ScheduledTask invScanTask; // Task for scanning player inventories
 
     /**
      * Called when the plugin is enabled.
-     * This method handles the initial setup, such as registering event listeners,
-     * setting command executors, and registering custom recipes and tasks.
+     * Handles setup tasks such as registering commands, listeners, and scheduled tasks.
      */
     @Override
     public void onEnable() {
-        // Log a message to the console when the plugin is enabled
-        getLogger().info("LifeSteal has been enabled! Life is much harder now!");
+        getLogger().info("LifeSteal plugin is starting...");
 
-        // Register event listeners to handle specific in-game events
-        // KillListener handles events related to player kills (e.g., stealing hearts)
-        getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
+        // Load configuration settings
+        LifeStealSettings.loadConfig();
 
-        // HeartUsageListener handles events when players use the custom Heart item
-        getServer().getPluginManager().registerEvents(new HeartUsageListener(), this);
+        // Register event listeners
+        registerListeners();
 
-        // Register the /heart command and link it to the HeartCommand class
-        Objects.requireNonNull(getServer().getPluginCommand("heart")).setExecutor(new HeartCommand());
+        // Register commands
+        registerCommands();
 
-        // Register the /withdraw command, which allows players to withdraw hearts
-        Objects.requireNonNull(getServer().getPluginCommand("withdraw")).setExecutor(new WithdrawCommand());
 
-        // Register the custom crafting recipe for the Heart item
-        HeartRecipe.registerHeartRecipe();
+        // Schedule the inventory scanning task
+        startInventoryScanTask();
 
-        // Run the heart recipe discovery task so when a player picks up a totem, they get the heart recipe
-        invScanTask = getServer().getScheduler().runTaskTimer(this, HeartRecipeDiscovery.getInstance(), 0, 0);
+        getLogger().info("LifeSteal plugin has been successfully enabled!");
     }
 
     /**
      * Called when the plugin is disabled.
-     * This method handles the cleanup, such as stopping the inventory scanning task.
+     * Handles cleanup tasks such as stopping scheduled tasks.
      */
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
-        getLogger().info("LifeSteal has been disabled!");
+        getLogger().info("LifeSteal plugin is shutting down...");
 
-        // Stop the invScanTask if it is running
-        if (invScanTask != null && invScanTask.isCancelled()) {
+        // Stop the inventory scanning task if it is running
+        if (invScanTask != null && !invScanTask.isCancelled()) {
             invScanTask.cancel();
         }
+
+        getLogger().info("LifeSteal plugin has been successfully disabled!");
     }
+
+    /**
+     * Registers all event listeners for the plugin.
+     */
+    private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
+        getServer().getPluginManager().registerEvents(new HeartUsageListener(), this);
+    }
+
+    /**
+     * Registers all commands for the plugin.
+     */
+    private void registerCommands() {
+        Objects.requireNonNull(getServer().getPluginCommand("heart"))
+                .setExecutor(new HeartCommand());
+        Objects.requireNonNull(getServer().getPluginCommand("withdraw"))
+                .setExecutor(new WithdrawCommand());
+
+        Objects.requireNonNull(getServer().getPluginCommand("lifesteal")).setExecutor(new LifeStealCommand());
+    }
+
+    /**
+     * Starts the inventory scanning task to automatically discover heart recipes.
+     */
+    private void startInventoryScanTask() {
+       invScanTask = getServer().getGlobalRegionScheduler().runAtFixedRate(
+               this,
+               task -> HeartRecipeDiscoveryTask.getInstance().run(),
+               1L, // Initial delay (0 ticks)
+               1L // Repeat interval (20 ticks = 1 second)
+       );
+   }
 
     /**
      * Gets the instance of the LifeSteal plugin.

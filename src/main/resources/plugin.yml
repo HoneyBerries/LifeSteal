@@ -1,28 +1,33 @@
 name: LifeSteal
-version: '1.0.0'
+version: '1.0.0-ALPHA'
 main: me.honeyberries.lifeSteal.LifeSteal
 api-version: '1.21'
+folia-supported: true
 authors: [ HoneyBerries ]
 commands:
+  lifesteal:
+    aliases: [ls]
+    description: Main command for the LifeSteal plugin.
+    usage: /lifesteal reload
   heart:
-    aliases: [health, hp, hearts]
-    description: Set the number of hearts a player has.
-    usage: /heart <action> <amount> <player (optional)>
-    permission: lifesteal.heart
-    permission-message: Sorry, you don't have permission to adjust player health!.
+    aliases: [hp, hearts]
+    description: Modify your or another player's health points.
+    usage: /heart <set|add|remove> <amount> [<player> (optional)]
   withdraw:
-    aliases: [wd, draw]
-    description: Lets you withdraw hearts.
-    usage: /withdraw <amount>
-    permission: lifesteal.withdraw
-    permission-message: Sorry, you can't withdraw hearts!
+    aliases: [extract, createheart, wd]
+    description: Convert your hearts into physical heart items that can be traded or consumed.
+    usage: /withdraw <amount> [<player> (optional)]
+
 permissions:
   lifesteal.heart:
-    description: Allows the use of the /heart command to modify player health.
+    description: Allows administrators to modify any player's health points using the heart command.
     default: op
   lifesteal.edit:
-    description: Allows modification of the lifesteal configuration
+    description: Grants access to modify the LifeSteal plugin's configuration settings.
     default: op
   lifesteal.withdraw:
-    description: Lets you withdraw hearts using /withdraw
+    description: Allows players to convert their own hearts into physical items.
     default: true
+  lifesteal.reload:
+    description: Allows players to reload the LifeSteal plugin's configuration.
+    default: op
