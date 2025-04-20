@@ -52,6 +52,12 @@ public class HeartCommand implements TabExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        // Check if the sender has permission to use the command
+        if (!sender.hasPermission("lifesteal.heart")) {
+            sendError(sender, "You do not have permission to use this command.");
+            return true;
+        }
+
         // No arguments: check own hearts (must be a player)
         if (args.length == 0) {
             handleSelfHealthCheck(sender);

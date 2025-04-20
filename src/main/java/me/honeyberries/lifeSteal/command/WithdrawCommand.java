@@ -38,11 +38,17 @@ public class WithdrawCommand implements TabExecutor {
      * @param sender  The entity (player or console) that issued the command.
      * @param command The command object representing the command being executed.
      * @param label   The alias of the command that was used (e.g., "withdraw").
-     * @param args    The arguments provided with the command (may be empty).
+     * @param args    The arguments provided with the command (maybe empty).
      * @return true in all cases to indicate the command was handled.
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        // Check if the sender has permission to use the command.
+        if (!sender.hasPermission("lifesteal.withdraw")) {
+            sender.sendMessage(Component.text("You do not have permission to use this command.").color(NamedTextColor.RED));
+            return true;
+        }
+
         // Check if heart withdrawal is enabled in the server configuration.
         if (!LifeStealSettings.isAllowWithdraw()) {
             sender.sendMessage(Component.text("Heart withdrawal is disabled on this server.").color(NamedTextColor.RED));
@@ -232,7 +238,7 @@ public class WithdrawCommand implements TabExecutor {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
             // First argument: suggest the "help" subcommand and common heart amounts.
-            return Stream.of("help", "1", "2", "3")
+            return Stream.of("help", "1", "2", "3", "4", "5")
                     .filter(s -> s.startsWith(args[0].toLowerCase())) // Filter suggestions based on current input
                     .toList();
         } else if (args.length == 2) {

@@ -4,6 +4,8 @@ main: me.honeyberries.lifeSteal.LifeSteal
 api-version: '1.21'
 folia-supported: true
 authors: [ HoneyBerries ]
+description: A Minecraft plugin that allows players to steal hearts from each other upon death.
+
 commands:
   lifesteal:
     aliases: [ls]
@@ -12,22 +14,35 @@ commands:
   heart:
     aliases: [hp, hearts]
     description: Modify your or another player's health points.
-    usage: /heart <set|add|remove> <amount> [<player> (optional)]
+    usage: /heart <action> <amount> [<player> (optional)]
   withdraw:
     aliases: [extract, createheart, wd]
     description: Convert your hearts into physical heart items that can be traded or consumed.
     usage: /withdraw <amount> [<player> (optional)]
 
 permissions:
-  lifesteal.heart:
-    description: Allows administrators to modify any player's health points using the heart command.
+  lifesteal.admin:
+    description: Grants access to all LifeSteal plugin commands and features.
     default: op
-  lifesteal.edit:
-    description: Grants access to modify the LifeSteal plugin's configuration settings.
-    default: op
+    children:
+      lifesteal.reload: true
+      lifesteal.heart: true
+      lifesteal.withdraw: true
+      lifesteal.withdraw.others: true
   lifesteal.withdraw:
-    description: Allows players to convert their own hearts into physical items.
+    description: Allows players to convert their hearts into physical items.
     default: true
+  lifesteal.withdraw.others:
+    description: Allows players to use withdraw command on others.
+    default: op
+    children:
+      lifesteal.withdraw: true
+  lifesteal.ignore:
+    description: Exempts players from LifeSteal mechanics.
+    default: false
   lifesteal.reload:
     description: Allows players to reload the LifeSteal plugin's configuration.
+    default: op
+  lifesteal.heart:
+    description: Allows players to modify health points using the heart command.
     default: op

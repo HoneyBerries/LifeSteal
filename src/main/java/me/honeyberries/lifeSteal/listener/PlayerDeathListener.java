@@ -37,6 +37,11 @@ public class PlayerDeathListener implements Listener {
     public void onPlayerDeath(@NotNull PlayerDeathEvent event) {
         Player victim = event.getPlayer();
 
+        // Check if the plugin ignores the victim
+        if (victim.hasPermission("lifesteal.ignore")) {
+            return;
+        }
+
         // Ignore deaths if the conditions for ignoring are met
         if (!shouldLifeStealTakeAction(victim)) {
             return;

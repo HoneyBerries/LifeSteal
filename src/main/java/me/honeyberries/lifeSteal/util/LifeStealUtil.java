@@ -102,7 +102,7 @@ public class LifeStealUtil {
     /**
      * Checks if the given {@link ItemStack} is a custom Heart item.
      * <p>
-     * This method verifies that the item is a {@link Material#NETHER_STAR} and contains
+     * This method verifies that the item is a heart item and contains
      * a unique persistent data key ("unique_heart_id") with the value "heart".
      * This ensures accurate identification even if the item's name or lore has been modified.
      *
@@ -111,7 +111,7 @@ public class LifeStealUtil {
      */
 
     public static boolean isHeartItem(ItemStack item) {
-        if (item == null || item.getType() != Material.NETHER_STAR) {
+        if (item == null || item.getType() != Material.matchMaterial(LifeStealSettings.getHeartItemID())) {
             return false; // Not a Nether Star, can't be a Heart
         }
 

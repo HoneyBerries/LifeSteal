@@ -1,96 +1,116 @@
 package me.honeyberries.lifeSteal.listener;
 
-import me.honeyberries.lifeSteal.LifeSteal;
-import me.honeyberries.lifeSteal.util.LifeStealUtil;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
+import me.honeyberries.lifeSteal.util.LifeStealUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Listener class for handling the usage of heart items in the LifeSteal plugin.
- * This class listens for player interactions with heart items and adjusts the player's
- * maximum health accordingly.
+ * Handles when players use the custom Heart items to gain health.
+ * <p>
+ * This listener detects when players right-click with a Heart item in their hand
+ * and applies the health gain according to the plugin's settings. It ensures the
+ * item is consumed properly and respects the maximum health limits.
  */
 public class HeartUsageListener implements Listener {
 
     /**
-     * Event handler for player interactions with heart items.
-     * When a player right-clicks while holding a heart item, their maximum health
-     * is increased, and the item is consumed.
+     * Handles the event when a player right-clicks with a Heart item.
+     * <p>
+     * This method:
+     * 1. Verifies the item is a Heart item
+     * 2. Checks if the player can gain more health
+     * 3. Applies the health gain
+     * 4. Consumes the item
+     * 5. Provides feedback to the player
      *
-     * @param event The PlayerInteractEvent triggered when a player interacts with an item.
+     * @param event The PlayerInteractEvent triggered when a player interacts with an item
      */
     @EventHandler
-    public void onPlayerUseHeart(PlayerInteractEvent event) {
-        // Ensure the interaction is a right-click with the main hand
-        if (event.getHand() != EquipmentSlot.HAND || !event.getAction().isRightClick()) {
+    public void onPlayerUseHeart(@NotNull PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+
+        // Only handle right-click air actions
+        if (event.getAction() != Action.RIGHT_CLICK_AIR) {
             return;
         }
 
-        Player player = event.getPlayer();
+
         ItemStack item = event.getItem();
 
-        // Check if the item has metadata and contains the unique heart identifier
-        if (item != null && item.hasItemMeta()) {
-            PersistentDataContainer dataContainer = item.getItemMeta().getPersistentDataContainer();
-            NamespacedKey key = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
+        // Check if the item is a valid Heart item
+        if (!LifeStealUtil.isHeartItem(item)) {
+            return;
+        }
 
-            if (dataContainer.has(key, PersistentDataType.STRING) &&
-                    "heart".equals(dataContainer.get(key, PersistentDataType.STRING))) {
-                // Cancel the event to prevent default behavior
-                event.setCancelled(true);
+        // Cancel the original event to prevent normal item usage
+        event.setCancelled(true);
 
-                // Retrieve the health gain value from the plugin settings
-                double healthGained = LifeStealSettings.getHealthPerItem();
+        // Get the health amount to add from configuration
+        double healthToAdd = LifeStealSettings.getHealthPerItem();
 
+        // If health gain is disabled in config, inform the player and return
+        if (healthToAdd <= 0) {
+            player.sendMessage(Component.text("Heart items are currently disabled on this server.").color(NamedTextColor.RED));
+            return;
+        }
 
-                double currentHealth = LifeStealUtil.getMaxHealth(player);
+        // Check if player has reached the maximum health limit
+        if (LifeStealSettings.isMaxHealthLimitEnabled()) {
+            double maxHealth = LifeStealSettings.getMaxHealthLimit();
+            double currentHealth = LifeStealUtil.getMaxHealth(player);
 
-                // Check if the player would exceed the max health limit
-                if (LifeStealSettings.isMaxHealthLimitEnabled()) {
-                    int maxHealth = LifeStealSettings.getMaxHealthLimit();
-                    if (currentHealth >= maxHealth) {
-                        player.sendMessage(Component.text("You have reached the maximum health limit of ")
-                                .append(Component.text(maxHealth / 2.0 + " " + (maxHealth == 2 ? "heart" : "hearts")).color(NamedTextColor.RED)));
-                        player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-                        return;
+            if (currentHealth >= maxHealth) {
+                player.sendMessage(Component.text("You have reached the maximum health limit of ")
+                        .color(NamedTextColor.RED)
+                        .append(Component.text(maxHealth / 2.0 + " " +
+                        (maxHealth == 2.0 ? "heart" : "hearts")).color(NamedTextColor.GOLD)));
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0F, 1.0F);
+                return;
+            }
 
-                    // If the player is below max health, check if health gain would exceed it
-                    } else if (currentHealth + healthGained > maxHealth) {
-                        // Cap the health gain to the maximum allowed
-                        healthGained = maxHealth - currentHealth;
-                    }
-                }
+            // If adding exceeds the max, adjust the amount to add
+            if (currentHealth + healthToAdd > maxHealth) {
+                player.sendMessage(Component.text("You will exceed the maximum health limit of ")
+                        .color(NamedTextColor.RED)
+                        .append(Component.text(maxHealth / 2.0 + " " +
+                        (maxHealth == 2.0 ? "heart" : "hearts")).color(NamedTextColor.GOLD)));
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0F, 1.0F);
+                return;
+            }
+        }
 
-                // Apply health increase
-                LifeStealUtil.adjustMaxHealth(player, healthGained);
+        // Apply the health increase
+        LifeStealUtil.adjustMaxHealth(player, healthToAdd);
 
-                // Notify the player about the health gain
-                player.sendMessage(Component.text("You have gained ")
-                        .append(Component.text("%.1f %s".formatted(healthGained / 2.0, healthGained == 2.0 ? "heart" : "hearts")).color(NamedTextColor.GREEN)));
+        // Provide feedback to the player
+        player.sendMessage(Component.text("You gained ")
+                .append(Component.text(String.format("%.1f", healthToAdd / 2.0), NamedTextColor.GREEN))
+                .append(Component.text(" " + (healthToAdd == 2.0 ? "heart" : "hearts") + "!").
+                color(NamedTextColor.GOLD)));
 
-                // Play a sound effect to indicate success
-                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+        // Play a sound effect for feedback
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
 
-                // Consume the heart item properly
-                int newAmount = item.getAmount() - 1;
-                if (newAmount <= 0) {
-                    // Remove the item completely from the player's hand
-                    player.getInventory().setItemInMainHand(null);
-                } else {
-                    // Reduce the count
-                    item.setAmount(newAmount);
-                }
+        // Consume one heart item
+        if (item.getAmount() > 1) {
+            item.setAmount(item.getAmount() - 1);
+        } else {
+            // If it's the last item, remove it completely
+
+            if (event.getHand() == EquipmentSlot.HAND) {
+                player.getInventory().setItemInMainHand(null);
+            } else {
+                player.getInventory().setItemInOffHand(null);
             }
         }
     }
