@@ -38,7 +38,7 @@ public class PlayerDeathListener implements Listener {
         Player victim = event.getPlayer();
 
         // Check if the plugin ignores the victim
-        if (victim.hasPermission("lifesteal.ignore")) {
+        if (victim.hasPermission("lifesteal.bypass")) {
             return;
         }
 
