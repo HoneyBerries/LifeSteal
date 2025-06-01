@@ -1,13 +1,9 @@
 package me.honeyberries.lifeSteal.task;
 
 import me.honeyberries.lifeSteal.LifeSteal;
-import me.honeyberries.lifeSteal.util.LifeStealUtil;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles the automatic discovery of heart crafting recipes in the LifeSteal plugin.
@@ -16,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
  * to heart crafting recipes.
  */
 public class HeartRecipeDiscoveryTask implements Runnable {
+
+    // Reference to the LifeSteal plugin instance
+    private static final LifeSteal plugin = LifeSteal.getInstance();
 
     // Singleton instance of HeartRecipeDiscoveryTask
     private static final HeartRecipeDiscoveryTask INSTANCE = new HeartRecipeDiscoveryTask();
@@ -38,35 +37,7 @@ public class HeartRecipeDiscoveryTask implements Runnable {
     public void run() {
         // Iterate through all online players on the server
         for (Player player : Bukkit.getOnlinePlayers()) {
-            // Scan the player's inventory for specific items
-            scanPlayerInventory(player);
-        }
-    }
-
-    /**
-     * Scans a player's inventory to check for items that should trigger recipe discovery.
-     * If the player possesses a Totem of Undying or a custom Heart item, they are granted
-     * access to the heart crafting recipe.
-     *
-     * @param player The player whose inventory is being scanned.
-     */
-    private static void scanPlayerInventory(Player player) {
-        // Flag to track if the player should be granted the recipe
-        boolean knowsRecipe = false;
-
-        // Loop through all items in the player's inventory
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null) {
-                // Check if the item is a Totem of Undying
-                if (item.getType() == Material.TOTEM_OF_UNDYING || LifeStealUtil.isHeartItem(item)) {
-                    knowsRecipe = true;
-                    break; // Exit the loop once a match is found
-                }
-            }
-        }
-
-        // If the player possesses a relevant item, grant them the recipe
-        if (knowsRecipe) {
+            // discover the heart crafting recipe for each player
             discoverRecipe(player);
         }
     }
@@ -79,9 +50,13 @@ public class HeartRecipeDiscoveryTask implements Runnable {
      */
     private static void discoverRecipe(Player player) {
         // Define the NamespacedKey for the custom heart recipe
-        NamespacedKey recipeKey = new NamespacedKey(LifeSteal.getInstance(), "custom_heart_recipe");
+        NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
 
-        // Unlock the recipe for the player
-        player.discoverRecipe(recipeKey);
+        // Unlock the recipe for the player if they haven't discovered it yet
+        if (!player.hasDiscoveredRecipe(recipeKey)) {
+            player.getScheduler().run(plugin, task -> {
+                player.discoverRecipe(recipeKey);
+            }, null);
+        }
     }
 }
