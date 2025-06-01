@@ -35,7 +35,7 @@ public class LifeStealCommand implements TabExecutor {
      */
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!sender.hasPermission("lifesteal.reload")) {
+        if (!sender.hasPermission("lifesteal.command.reload")) {
             sender.sendMessage(Component.text("You do not have permission to use this command.").color(NamedTextColor.RED));
             return true;
         }

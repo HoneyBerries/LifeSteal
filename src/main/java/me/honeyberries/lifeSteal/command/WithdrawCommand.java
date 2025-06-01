@@ -40,7 +40,7 @@ public class WithdrawCommand implements TabExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         // Verify that the sender has basic permission for withdrawing hearts.
-        if (!sender.hasPermission("lifesteal.withdraw")) {
+        if (!sender.hasPermission("lifesteal.heart.withdraw")) {
             sender.sendMessage(Component.text("You do not have permission to use this command.").color(NamedTextColor.RED));
             return true;
         }
@@ -96,7 +96,7 @@ public class WithdrawCommand implements TabExecutor {
             // If sender is not the target, validate the extra permission.
             if (sender instanceof Player) {
                 if (!((Player) sender).getUniqueId().equals(target.getUniqueId()) &&
-                        !sender.hasPermission("lifesteal.withdraw.others")) {
+                        !sender.hasPermission("lifesteal.heart.withdraw.others")) {
                     sender.sendMessage(Component.text("You don't have permission to withdraw hearts from other players.").color(NamedTextColor.RED));
                     return true;
                 }

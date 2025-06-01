@@ -9,40 +9,41 @@ description: A Minecraft plugin that allows players to steal hearts from each ot
 commands:
   lifesteal:
     aliases: [ls]
-    description: Main command for the LifeSteal plugin.
-    usage: /lifesteal reload
+    description: Main administrative command for the LifeSteal plugin.
+    usage: /lifesteal reload - Reloads the plugin configuration
   heart:
     aliases: [hp, hearts]
-    description: Modify your or another player's health points.
-    usage: /heart <action> <amount> [<player> (optional)]
+    description: Manage player health points - add, remove, or set hearts.
+    usage: /heart <add|remove|set> <amount> [player] - Modify hearts for yourself or others
   withdraw:
     aliases: [extract, createheart, wd]
-    description: Convert your hearts into physical heart items that can be traded or consumed.
-    usage: /withdraw <amount> [<player> (optional)]
+    description: Convert your hearts into physical heart items for trading or consumption.
+    usage: /withdraw <amount> [player] - Convert hearts to physical items
 
 permissions:
   lifesteal.admin:
-    description: Grants access to all LifeSteal plugin commands and features.
+    description: Grants full administrative access to all LifeSteal features.
     default: op
     children:
-      lifesteal.reload: true
-      lifesteal.heart: true
-      lifesteal.withdraw: true
-      lifesteal.withdraw.others: true
-  lifesteal.withdraw:
-    description: Allows players to convert their hearts into physical items.
+      lifesteal.command.reload: true
+      lifesteal.command.heart: true
+      lifesteal.heart.withdraw: true
+      lifesteal.heart.withdraw.others: true
+  lifesteal.heart.withdraw:
+    description: Allows players to convert their own hearts into physical items.
     default: true
-  lifesteal.withdraw.others:
-    description: Allows players to use withdraw command on others.
+  lifesteal.heart.withdraw.others:
+    description: Allows players to withdraw hearts from other players.
     default: op
     children:
-      lifesteal.withdraw: true
-  lifesteal.ignore:
-    description: Exempts players from LifeSteal mechanics.
+      lifesteal.heart.withdraw: true
+  lifesteal.bypass:
+    description: Exempts players from all LifeSteal mechanics and heart loss.
     default: false
-  lifesteal.reload:
-    description: Allows players to reload the LifeSteal plugin's configuration.
+  lifesteal.command.reload:
+    description: Allows players to reload the plugin configuration.
     default: op
-  lifesteal.heart:
-    description: Allows players to modify health points using the heart command.
+  lifesteal.command.heart:
+    description: Allows players to modify health points for themselves and others.
     default: op
+
