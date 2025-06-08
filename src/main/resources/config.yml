@@ -19,10 +19,9 @@ max-health-limit: 40
 # Minimum health limit in health points (e.g., 2 = 1 heart)
 # This is the least health a player can have, applied to:
 # - Deaths from natural causes (e.g., falling, lava)
-# - Deaths from monsters
 # - Deaths from other players
 # - Admin commands (e.g., /heart set/add/remove)
-# Example: If set to 2, a player's health won’t drop below 1 heart, even after dying.
+# Example: If set to 2, a player's health won't drop below 1 heart, even after dying.
 # Set to 0 or negative to remove this limit.
 min-health-limit: 2
 
@@ -62,17 +61,35 @@ heart-item:
       - "DTD"  # Row 2: Diamond Block, Totem of Undying, Diamond Block
       - "GIG"  # Row 3: Gold Block, Iron Block, Gold Block
 
+revival-item:
+    # Revival item name (e.g., "Revival Heart")
+    revival-item-name: "Revival Beacon"
+
+    # Revival item identifier (e.g., "BEACON")
+    # Specifies the Minecraft item type used for the revival item.
+    revival-item-id: "BEACON"
+
+    # Health points given by each revival item when used (e.g., 4 = 2 hearts)
+    health-per-revival-item: 6
+
+    # Allows players to craft revival items using the recipe below.
+    # Set to false to disable crafting and require other methods (e.g., drops or commands).
+    allow-crafting: true
+
+    # Crafting recipe for the revival item in a 3x3 crafting grid
+    recipe:
+        ingredients: # Use H for a heart
+        G: GOLD_BLOCK       # G = Gold Block
+        A: APPLE            # A = Apple
+        shape:
+
+
 # Configure how health is lost or gained upon different types of deaths
 death-settings:
   natural-death:
     # Health points lost when dying from natural causes
     # Examples: falling, drowning, lava, suffocation, starvation, etc.
     # Set to 0 or negative to disable health loss for natural deaths.
-    health-lost: 2
-
-  monster-death:
-    # Health points lost when killed by a monster (e.g., zombie, creeper)
-    # Set to 0 or negative to disable health loss for monster deaths.
     health-lost: 2
 
   player-death:
@@ -83,6 +100,22 @@ death-settings:
     # Set to 0 or negative to disable health gain for the killer.
     health-gained: 2
 
+
+# Elimination settings
+elimination:
+  # Whether elimination is enabled
+  enabled: true
+  # What happens when a player is eliminated
+  # Options: BAN, SPECTATOR
+  mode: SPECTATOR
+  # If mode is SPECTATOR, set the message
+  spectator-message: "You have been eliminated! You are now a spectator."
+
+  # Whether eliminated players can be revived
+  allow-revival: true
+  # Amount of health given when revived
+  revival-health: 6 # Health points for revival (e.g., 6 = 3 hearts)
+
 # Additional features and behaviors of the LifeSteal plugin
 features:
   allow-withdraw:
@@ -92,11 +125,11 @@ features:
 
   ignore-keep-inventory:
     # If true, LifeSteal health mechanics (loss/gain) apply even if keepInventory is enabled
-    # in the server’s game rules (normally, keepInventory might prevent health loss).
+    # in the server's game rules (normally, keepInventory might prevent health loss).
     # If false, health mechanics may not apply when keepInventory is on, depending on server settings.
     # Set to true to ensure health changes always occur on death.
     enabled: false
 
-# Note: After changing this config, restart the server or use the plugin’s reload command
+# Note: After changing this config, restart the server or use the plugin's reload command
 # (/lifesteal reload) for changes to take effect. Test settings to ensure they work as
-# expected. Refer to the plugin’s documentation or support for further assistance.
+# expected. Refer to the plugin's documentation or support for further assistance.
