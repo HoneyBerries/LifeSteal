@@ -13,7 +13,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
@@ -40,7 +39,7 @@ public class WithdrawCommand implements TabExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         // Verify that the sender has basic permission for withdrawing hearts.
-        if (!sender.hasPermission("lifesteal.heart.withdraw")) {
+        if (!sender.hasPermission("lifesteal.command.withdraw")) {
             sender.sendMessage(Component.text("You do not have permission to use this command.").color(NamedTextColor.RED));
             return true;
         }
@@ -76,7 +75,7 @@ public class WithdrawCommand implements TabExecutor {
             hearts = parseHearts(sender, args[0]);
             if (hearts <= 0) return true;
 
-             // Error message already sent in parseHearts
+            // Make sure the sender is a player for 1 argument usage.
             if (!(sender instanceof Player)) {
                 sender.sendMessage(Component.text("Console must specify a player.").color(NamedTextColor.RED));
                 return true;
@@ -95,8 +94,8 @@ public class WithdrawCommand implements TabExecutor {
 
             // If sender is not the target, validate the extra permission.
             if (sender instanceof Player) {
-                if (!((Player) sender).getUniqueId().equals(target.getUniqueId()) &&
-                        !sender.hasPermission("lifesteal.heart.withdraw.others")) {
+                if ((sender != target) &&
+                    !sender.hasPermission("lifesteal.command.withdraw.others")) {
                     sender.sendMessage(Component.text("You don't have permission to withdraw hearts from other players.").color(NamedTextColor.RED));
                     return true;
                 }
@@ -116,7 +115,7 @@ public class WithdrawCommand implements TabExecutor {
         if (currentHealth - requiredHealth < LifeStealSettings.getMinHealthLimit()) {
             sender.sendMessage(
                 Component.text(target.getName() + " doesn't have enough health to withdraw ")
-                    .append(Component.text(hearts + " " + (hearts == 1 ? "heart" : "hearts") + " (requires " + requiredHealth + " hp)!", NamedTextColor.RED))
+                    .append(Component.text(hearts + " " + (hearts == 1 ? "heart" : "hearts") + " (requires " + requiredHealth/2 + " hearts)!", NamedTextColor.RED))
             );
             return true;
         }
@@ -128,31 +127,29 @@ public class WithdrawCommand implements TabExecutor {
         HashMap<Integer, ItemStack> remainingItems = target.getInventory().addItem(heartItem);
 
         // Determine the number of items successfully withdrawn.
-        double itemsWithdrawn = hearts - remainingItems.values().stream().mapToInt(ItemStack::getAmount).sum();
-        if (itemsWithdrawn > 0) {
-            // Adjust the target player's max health.
-            double healthWithdrawn = itemsWithdrawn * healthPerItem;
-            LifeStealUtil.adjustMaxHealth(target, -healthWithdrawn);
-            String content = String.format("%.1f", itemsWithdrawn) + " " + (itemsWithdrawn == 1 ? "heart" : "hearts") + " (" + healthWithdrawn + " health points)";
-            sender.sendMessage(
-                Component.text("You have withdrawn ")
-                    .append(Component.text(content, NamedTextColor.GREEN))
-            );
-            target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+        // Adjust the target player's max health.
+        LifeStealUtil.adjustMaxHealth(target, -hearts*2); // Each heart item gives 2 health points
+        String content = String.format("%d %s (%d health points)", hearts, (hearts == 1 ? "heart" : "hearts"), hearts * 2);
 
-            // Notify the target player if the sender is not the same as the target.
-            if (!sender.equals(target)) {
-                target.sendMessage(
-                    Component.text(sender.getName() + " has withdrawn ")
-                        .append(Component.text(content, NamedTextColor.RED))
-                );
-            }
+        sender.sendMessage(
+            Component.text("You have withdrawn ").color(NamedTextColor.GOLD)
+                .append(Component.text(content, NamedTextColor.GREEN))
+        );
+        target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+
+        // Notify the target player if the sender is not the same as the target.
+        if (!sender.equals(target)) {
+            target.sendMessage(
+                Component.text(sender.getName() + " has withdrawn ")
+                    .append(Component.text(content, NamedTextColor.RED))
+                    .append(Component.text(" from you!", NamedTextColor.RED))
+            );
         }
 
         // If some items could not be added, drop them on the ground near the target.
         if (!remainingItems.isEmpty()) {
             remainingItems.values().forEach(item -> target.getWorld().dropItemNaturally(target.getLocation(), item));
-            target.sendMessage(Component.text("Some heart items were dropped due to a full inventory!").color(NamedTextColor.YELLOW));
+            target.sendMessage(Component.text("Warning: Some heart items were dropped due to a full inventory!").color(NamedTextColor.YELLOW));
         }
         return true;
     }
@@ -209,11 +206,28 @@ public class WithdrawCommand implements TabExecutor {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            return Stream.of("help", "1", "2", "3", "4", "5")
+            List<String> suggestions = List.of();
+
+            // Only show any suggestions if they have withdraw permission
+            if (sender.hasPermission("lifesteal.command.withdraw")) {
+                // Add help suggestion
+                suggestions = Stream.of("help")
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .toList();
+                    .collect(java.util.stream.Collectors.toList());
+
+                // Add amount suggestion
+                suggestions = Stream.concat(Stream.of("<amount>"), suggestions.stream())
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            return suggestions;
         } else if (args.length == 2) {
-            return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
+            // Only suggest player names if they have permission to withdraw from others
+            if (sender.hasPermission("lifesteal.command.withdraw.others")) {
+                return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .toList();
+            }
         }
         return List.of();
     }

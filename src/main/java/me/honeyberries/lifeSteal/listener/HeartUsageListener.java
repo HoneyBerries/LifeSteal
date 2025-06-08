@@ -58,13 +58,15 @@ public class HeartUsageListener implements Listener {
         // Get the health amount to add from configuration
         double healthToAdd = LifeStealSettings.getHealthPerItem();
 
+        final boolean isAllowWithdraw = LifeStealSettings.isAllowWithdraw();
+
         // If health gain is disabled in config, inform the player and return
-        if (healthToAdd <= 0) {
+        if (!isAllowWithdraw) {
             player.sendMessage(Component.text("Heart items are currently disabled on this server.").color(NamedTextColor.RED));
             return;
         }
 
-        // Check if player has reached the maximum health limit
+        // Check if the player has reached the maximum health limit
         if (LifeStealSettings.isMaxHealthLimitEnabled()) {
             double maxHealth = LifeStealSettings.getMaxHealthLimit();
             double currentHealth = LifeStealUtil.getMaxHealth(player);
@@ -72,7 +74,7 @@ public class HeartUsageListener implements Listener {
             if (currentHealth >= maxHealth) {
                 player.sendMessage(Component.text("You have reached the maximum health limit of ")
                         .color(NamedTextColor.RED)
-                        .append(Component.text(maxHealth / 2.0 + " " +
+                        .append(Component.text(LifeStealUtil.formatHealth(maxHealth / 2.0) + " " +
                         (maxHealth == 2.0 ? "heart" : "hearts")).color(NamedTextColor.GOLD)));
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0F, 1.0F);
                 return;
@@ -82,7 +84,7 @@ public class HeartUsageListener implements Listener {
             if (currentHealth + healthToAdd > maxHealth) {
                 player.sendMessage(Component.text("You will exceed the maximum health limit of ")
                         .color(NamedTextColor.RED)
-                        .append(Component.text(maxHealth / 2.0 + " " +
+                        .append(Component.text(LifeStealUtil.formatHealth(maxHealth / 2.0) + " " +
                         (maxHealth == 2.0 ? "heart" : "hearts")).color(NamedTextColor.GOLD)));
                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0F, 1.0F);
                 return;
@@ -94,7 +96,7 @@ public class HeartUsageListener implements Listener {
 
         // Provide feedback to the player
         player.sendMessage(Component.text("You gained ")
-                .append(Component.text(String.format("%.1f", healthToAdd / 2.0), NamedTextColor.GREEN))
+                .append(Component.text(LifeStealUtil.formatHealth(healthToAdd / 2.0), NamedTextColor.GREEN))
                 .append(Component.text(" " + (healthToAdd == 2.0 ? "heart" : "hearts") + "!").
                 color(NamedTextColor.GOLD)));
 
@@ -115,3 +117,4 @@ public class HeartUsageListener implements Listener {
         }
     }
 }
+

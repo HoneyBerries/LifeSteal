@@ -32,25 +32,25 @@ public class LifeStealSettings {
     // --- Configuration Properties ---
 
     /** The maximum health a player can have. A value of 0 or less disables this limit. */
-    private static int maxHealthLimit;
+    private static double maxHealthLimit;
 
-    /** The minimum health a player can have. A value of 0 or less disables this limit. */
-    private static int minHealthLimit;
+    /** The minimum health a player can have */
+    private static double minHealthLimit;
 
     /** The amount of health lost upon a natural death (e.g., starvation, fall damage). */
-    private static int naturalDeathHealthLost;
+    private static double naturalDeathHealthLost;
 
     /** The amount of health lost when killed by a monster. */
-    private static int monsterDeathHealthLost;
+    private static double monsterDeathHealthLost;
 
     /** The amount of health lost when killed by another player. */
-    private static int playerDeathHealthLost;
+    private static double playerDeathHealthLost;
 
     /** The amount of health gained when a player kills another player. */
-    private static int playerKillHealthGained;
+    private static double playerKillHealthGained;
 
     /** The amount of health restored when a player consumes a heart item. */
-    private static int healthPerItem;
+    private static double healthPerItem;
 
     /** Determines if players are allowed to withdraw health to create heart items. */
     private static boolean allowWithdraw;
@@ -98,14 +98,14 @@ public class LifeStealSettings {
             // Load the YAML configuration from the specified file.
             YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 
-            // --- Load Integer Values ---
-            maxHealthLimit = config.getInt("max-health-limit");
-            minHealthLimit = config.getInt("min-health-limit");
-            naturalDeathHealthLost = config.getInt("death-settings.natural-death.health-lost");
-            monsterDeathHealthLost = config.getInt("death-settings.monster-death.health-lost");
-            playerDeathHealthLost = config.getInt("death-settings.player-death.health-lost");
-            playerKillHealthGained = config.getInt("death-settings.player-death.health-gained");
-            healthPerItem = config.getInt("heart-item.health-per-item");
+            // --- Load Double Values ---
+            maxHealthLimit = config.getDouble("max-health-limit");
+            minHealthLimit = config.getDouble("min-health-limit");
+            naturalDeathHealthLost = config.getDouble("death-settings.natural-death.health-lost");
+            monsterDeathHealthLost = config.getDouble("death-settings.monster-death.health-lost");
+            playerDeathHealthLost = config.getDouble("death-settings.player-death.health-lost");
+            playerKillHealthGained = config.getDouble("death-settings.player-death.health-gained");
+            healthPerItem = config.getDouble("heart-item.health-per-item");
 
             // --- Load Boolean Values ---
             allowWithdraw = config.getBoolean("features.allow-withdraw.enabled");
@@ -152,6 +152,19 @@ public class LifeStealSettings {
                 LOGGER.log(Level.INFO, "Crafting is disabled. Heart recipe not registered.");
             }
 
+            // Make sure that min_health is not greater than max_health
+            if (minHealthLimit > maxHealthLimit && maxHealthLimit > 0) {
+                LOGGER.warning("Minimum health limit is greater than maximum health limit! Adjusting minimum health limit to defaults.");
+                minHealthLimit = 1; // Ensure min is at least 1 and less than max
+            }
+
+            // Make sure that min_health is not less than 2 (1 heart)
+            if (minHealthLimit < 1) {
+                LOGGER.warning("Minimum health limit is less than 1! Adjusting minimum health limit to defaults.");
+                minHealthLimit = 1; // Default to 1 health
+            }
+
+
             LOGGER.log(Level.INFO, "Configuration loaded successfully.");
 
         } catch (Exception e) {
@@ -163,7 +176,7 @@ public class LifeStealSettings {
             allowCrafting = false;
             ignoreKeepInventory = false;
             maxHealthLimit = 0;
-            minHealthLimit = 0;
+            minHealthLimit = 1;
             naturalDeathHealthLost = 0;
             monsterDeathHealthLost = 0;
             playerDeathHealthLost = 0;
@@ -230,7 +243,7 @@ public class LifeStealSettings {
      *
      * @return The maximum health limit.
      */
-    public static int getMaxHealthLimit() {
+    public static double getMaxHealthLimit() {
         return maxHealthLimit;
     }
 
@@ -239,7 +252,7 @@ public class LifeStealSettings {
      *
      * @return The minimum health limit.
      */
-    public static int getMinHealthLimit() {
+    public static double getMinHealthLimit() {
         return minHealthLimit;
     }
 
@@ -248,7 +261,7 @@ public class LifeStealSettings {
      *
      * @return The health lost on natural death.
      */
-    public static int getNaturalDeathHealthLost() {
+    public static double getNaturalDeathHealthLost() {
         return naturalDeathHealthLost;
     }
 
@@ -257,7 +270,7 @@ public class LifeStealSettings {
      *
      * @return The health lost on monster death.
      */
-    public static int getMonsterDeathHealthLost() {
+    public static double getMonsterDeathHealthLost() {
         return monsterDeathHealthLost;
     }
 
@@ -266,7 +279,7 @@ public class LifeStealSettings {
      *
      * @return The health lost on player death.
      */
-    public static int getPlayerDeathHealthLost() {
+    public static double getPlayerDeathHealthLost() {
         return playerDeathHealthLost;
     }
 
@@ -275,7 +288,7 @@ public class LifeStealSettings {
      *
      * @return The health gained on player kill.
      */
-    public static int getPlayerKillHealthGained() {
+    public static double getPlayerKillHealthGained() {
         return playerKillHealthGained;
     }
 
@@ -284,7 +297,7 @@ public class LifeStealSettings {
      *
      * @return The health restored per heart item.
      */
-    public static int getHealthPerItem() {
+    public static double getHealthPerItem() {
         return healthPerItem;
     }
 

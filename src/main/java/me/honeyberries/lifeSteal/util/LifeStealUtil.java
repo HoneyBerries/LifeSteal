@@ -9,6 +9,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -32,15 +33,12 @@ public class LifeStealUtil {
     }
     /**
      * Sets the player's max health to a specific value.
-     * Ensures the player's health does not fall below 2.0 (1 heart).
      *
      * @param player The player whose max health is being set.
      * @param health The new max health value.
      */
     public static void setMaxHealth(@NotNull Player player, double health) {
-        // Ensure the health is at least 2.0 (1 heart)
-        double newMaxHealth = Math.max(2.0, health);
-        Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(newMaxHealth);
+        Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(health);
     }
 
     /**
@@ -51,6 +49,21 @@ public class LifeStealUtil {
      */
     public static double getMaxHealth(@NotNull Player player) {
         return Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getBaseValue();
+    }
+
+    /**
+     * Formats a health value for display, removing decimal places for whole numbers.
+     * For example: 2.0 becomes "2", but 2.5 becomes "2.5"
+     *
+     * @param value The health value to format
+     * @return A formatted string representation of the health value
+     */
+    public static String formatHealth(double value) {
+        if (value == Math.floor(value)) {
+            return String.valueOf((int)value);
+        } else {
+            return String.format("%.1f", value);
+        }
     }
 
     /**
@@ -77,9 +90,8 @@ public class LifeStealUtil {
 
             // Set the lore (description)
             meta.lore(List.of(
-                    Component.text(String.format("Gives %.1f permanent %s",
-                            LifeStealSettings.getHealthPerItem() / 2.0,
-                            LifeStealSettings.getHealthPerItem() > 1 ? "hearts" : "heart"))
+                    Component.text("Gives " + formatHealth(LifeStealSettings.getHealthPerItem() / 2.0) + " permanent " +
+                            (LifeStealSettings.getHealthPerItem() == 2.0 ? "heart" : "hearts"))
                             .color(NamedTextColor.DARK_PURPLE)
             ));
 
@@ -87,6 +99,7 @@ public class LifeStealUtil {
             meta.addEnchant(Enchantment.MENDING, 1, true);
 
             // Hide the enchantment details to keep the glow without showing the enchantment
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
             // Add custom persistent data to uniquely identify the item
             NamespacedKey heartIDKey = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");

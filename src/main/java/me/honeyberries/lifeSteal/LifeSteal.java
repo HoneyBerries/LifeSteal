@@ -1,7 +1,7 @@
 package me.honeyberries.lifeSteal;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
-import me.honeyberries.lifeSteal.command.HeartCommand;
+import me.honeyberries.lifeSteal.command.HealthCommand;
 import me.honeyberries.lifeSteal.command.LifeStealCommand;
 import me.honeyberries.lifeSteal.command.WithdrawCommand;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
@@ -72,8 +72,8 @@ public final class LifeSteal extends JavaPlugin {
      * Registers all commands for the plugin.
      */
     private void registerCommands() {
-        Objects.requireNonNull(getServer().getPluginCommand("heart"))
-                .setExecutor(new HeartCommand());
+        Objects.requireNonNull(getServer().getPluginCommand("health"))
+                .setExecutor(new HealthCommand());
         Objects.requireNonNull(getServer().getPluginCommand("withdraw"))
                 .setExecutor(new WithdrawCommand());
 

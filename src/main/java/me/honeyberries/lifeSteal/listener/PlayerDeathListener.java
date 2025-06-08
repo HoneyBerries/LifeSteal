@@ -8,7 +8,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -19,7 +18,7 @@ import java.util.logging.Logger;
 
 /**
  * Handles player death events in the LifeSteal plugin.
- * This listener implements the mechanics for handling deaths caused by players, monsters, or natural causes,
+ * This listener implements the mechanics for handling deaths caused by players or natural causes,
  * and adjusts the maximum health of the involved players accordingly.
  */
 public class PlayerDeathListener implements Listener {
@@ -38,7 +37,7 @@ public class PlayerDeathListener implements Listener {
         Player victim = event.getPlayer();
 
         // Check if the plugin ignores the victim
-        if (victim.hasPermission("lifesteal.bypass")) {
+        if (victim.hasPermission("lifesteal.debug.bypass")) {
             return;
         }
 
@@ -82,21 +81,17 @@ public class PlayerDeathListener implements Listener {
         }
         return null;
     }
+
     /**
-     * Handles the death cause and adjusts health based on whether the killer is a player, monster, or natural cause.
+     * Handles the death cause and adjusts health based on whether the killer is a player or natural cause.
      *
      * @param victim The player who died.
      * @param killer The player who killed the victim, or null if not applicable.
      */
     private void handleDeathCause(Player victim, Player killer) {
         if (killer != null) {
-
             // Player killed another player
             handlePlayerKill(victim, killer);
-        } else if (victim.getLastDamageCause() != null &&
-                  victim.getLastDamageCause().getEntity() instanceof Monster) {
-            // Monster killed the player
-            handleMonsterDeath(victim);
         } else {
             // Natural causes (falling, drowning, etc.)
             handleNaturalDeath(victim);
@@ -111,7 +106,7 @@ public class PlayerDeathListener implements Listener {
      */
     private void handleNaturalDeath(@NotNull Player victim) {
         // Get health lost from config
-        int healthLost = LifeStealSettings.getNaturalDeathHealthLost();
+        double healthLost = LifeStealSettings.getNaturalDeathHealthLost();
         if (healthLost <= 0) {
             return; // Feature disabled in config
         }
@@ -122,12 +117,11 @@ public class PlayerDeathListener implements Listener {
 
         // Check for minimum health limit
         if (LifeStealSettings.isMinHealthLimitEnabled()) {
-            int minHealth = LifeStealSettings.getMinHealthLimit();
+            double minHealth = LifeStealSettings.getMinHealthLimit();
             if (newHealth < minHealth) {
-                healthLost = (int)(currentHealth - minHealth);
-                newHealth = minHealth;
+                healthLost = currentHealth - minHealth;
                 victim.sendMessage(Component.text("Your health can't go below the minimum of ")
-                        .append(Component.text(minHealth / 2.0 + " " + (minHealth == 2 ? "heart" : "hearts"), NamedTextColor.RED)));
+                        .append(Component.text(LifeStealUtil.formatHealth(minHealth / 2.0) + " " + (minHealth == 2.0 ? "heart" : "hearts"), NamedTextColor.RED)));
             }
         }
 
@@ -138,61 +132,14 @@ public class PlayerDeathListener implements Listener {
 
             // Send message to the player
             victim.sendMessage(Component.text("You lost ")
-                    .append(Component.text(String.format("%.1f", heartsLost), NamedTextColor.RED))
+                    .append(Component.text(LifeStealUtil.formatHealth(heartsLost), NamedTextColor.RED))
                     .append(Component.text(" " + (heartsLost == 1.0 ? "heart" : "hearts") + " due to death.")));
 
             logger.info(victim.getName() + " lost " + healthLost + " health points (" +
-                        heartsLost + " hearts) due to natural death.");
+                        LifeStealUtil.formatHealth(heartsLost) + (heartsLost == 1.0 ? " heart" : " hearts") + " due to natural death.");
         }
     }
 
-    /**
-     * Handles deaths caused by monsters.
-     * Reduces the victim's maximum health and enforces the minimum health limit if enabled.
-     *
-     * @param victim The player who died.
-     */
-    private void handleMonsterDeath(@NotNull Player victim) {
-        // Get health lost from config
-        int healthLost = LifeStealSettings.getMonsterDeathHealthLost();
-        if (healthLost <= 0) {
-            return; // Feature disabled in config
-        }
-
-        // Get monster name safely
-        String monsterName = "unknown monster";
-        if (victim.getLastDamageCause() != null) {
-            victim.getLastDamageCause();
-            monsterName = victim.getLastDamageCause().getEntity().getType().name();
-        }
-
-        // Calculate new health
-        double currentHealth = LifeStealUtil.getMaxHealth(victim);
-        double newHealth = currentHealth - healthLost;
-
-        // Check for minimum health limit
-        if (LifeStealSettings.isMinHealthLimitEnabled()) {
-            int minHealth = LifeStealSettings.getMinHealthLimit();
-            if (newHealth < minHealth) {
-                healthLost = (int)(currentHealth - minHealth);
-                newHealth = minHealth;
-                victim.sendMessage(Component.text("Your health can't go below the minimum of ")
-                        .append(Component.text(minHealth / 2.0 + " " + (minHealth == 2 ? "heart" : "hearts"), NamedTextColor.RED)));
-            }
-        }
-
-        // Only adjust health if there's a change
-        if (healthLost > 0) {
-            LifeStealUtil.adjustMaxHealth(victim, -healthLost);
-            double heartsLost = healthLost / 2.0;
-            victim.sendMessage(Component.text("You lost ")
-                    .append(Component.text(String.format("%.1f", heartsLost), NamedTextColor.RED))
-                    .append(Component.text(" " + (heartsLost == 1.0 ? "heart" : "hearts") + " due to a " + monsterName + ".")));
-
-            logger.info(victim.getName() + " lost " + healthLost + " health points (" +
-                        heartsLost + " hearts) due to death by " + monsterName + ".");
-        }
-    }
     /**
      * Handles deaths caused by other players.
      * Reduces the victim's maximum health, increases the killer's maximum health,
@@ -209,7 +156,7 @@ public class PlayerDeathListener implements Listener {
 
         // Check for minimum health limit for victim
         if (LifeStealSettings.isMinHealthLimitEnabled()) {
-            int minHealth = LifeStealSettings.getMinHealthLimit();
+            double minHealth = LifeStealSettings.getMinHealthLimit();
             if (victimNewHealth < minHealth) {
                 healthLost = LifeStealUtil.getMaxHealth(victim) - minHealth;
                 if (healthLost <= 0) {
@@ -217,14 +164,14 @@ public class PlayerDeathListener implements Listener {
                 } else {
                     // Notify victim they've reached the minimum health limit
                     victim.sendMessage(Component.text("You've reached the minimum health limit of ")
-                            .append(Component.text(minHealth / 2.0 + " " + (minHealth == 2 ? "heart" : "hearts")).color(NamedTextColor.RED)));
+                            .append(Component.text(LifeStealUtil.formatHealth(minHealth / 2.0) + " " + (minHealth == 2 ? "heart" : "hearts")).color(NamedTextColor.RED)));
                 }
             }
         }
 
         // Check for maximum health limit for killer
         if (LifeStealSettings.isMaxHealthLimitEnabled()) {
-            int maxHealth = LifeStealSettings.getMaxHealthLimit();
+            double maxHealth = LifeStealSettings.getMaxHealthLimit();
             if (killerNewHealth > maxHealth) {
                 healthGained = maxHealth - LifeStealUtil.getMaxHealth(killer);
                 if (healthGained <= 0) {
@@ -232,15 +179,15 @@ public class PlayerDeathListener implements Listener {
                 } else {
                     // Notify killer they've reached the maximum health limit
                     killer.sendMessage(Component.text("You've reached the maximum health limit of ")
-                            .append(Component.text(maxHealth / 2.0 + " " + (maxHealth == 2 ? "heart" : "hearts")).color(NamedTextColor.RED)));
+                            .append(Component.text(LifeStealUtil.formatHealth(maxHealth / 2.0) + " " + (maxHealth == 2 ? "heart" : "hearts")).color(NamedTextColor.RED)));
                 }
             }
         }
 
-        logger.info("%s was killed by %s and lost %.1f health points.".formatted(
-                victim.getName(), killer.getName(), healthLost));
-        logger.info("%s gained %.1f health points by killing %s.".formatted(
-                killer.getName(), healthGained, victim.getName()));
+        logger.info("%s was killed by %s and lost %s health points.".formatted(
+                victim.getName(), killer.getName(), LifeStealUtil.formatHealth(healthLost)));
+        logger.info("%s gained %s health points by killing %s.".formatted(
+                killer.getName(), LifeStealUtil.formatHealth(healthGained), victim.getName()));
 
         if (healthLost > 0) {
             LifeStealUtil.adjustMaxHealth(victim, -healthLost);

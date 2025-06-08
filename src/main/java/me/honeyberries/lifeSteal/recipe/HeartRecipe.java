@@ -18,15 +18,14 @@ public class HeartRecipe {
     // plugin instance
     private static final LifeSteal plugin = LifeSteal.getInstance();
 
+    // Heart recipe namespaced key
+    public static final NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
 
     /**
      * Registers the custom crafting recipe for the "Heart" item.
      */
     public static void registerHeartRecipe() {
-        NamespacedKey key = new NamespacedKey(plugin, "custom_heart_recipe");
-        Bukkit.removeRecipe(key); // remove the old recipe if it exists
-
-        ShapedRecipe heartRecipe = new ShapedRecipe(key, LifeStealUtil.createHeartItem(1));
+        ShapedRecipe heartRecipe = new ShapedRecipe(recipeKey, LifeStealUtil.createHeartItem(1));
         heartRecipe.shape(LifeStealSettings.getRecipeShape());
 
         // set ingredients from config
