@@ -38,7 +38,7 @@ public class LifeStealUtil {
      * @param health The new max health value.
      */
     public static void setMaxHealth(@NotNull Player player, double health) {
-        Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(health);
+        Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).setBaseValue(health);
     }
 
     /**
@@ -48,7 +48,7 @@ public class LifeStealUtil {
      * @return The player's max health.
      */
     public static double getMaxHealth(@NotNull Player player) {
-        return Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getBaseValue();
+        return Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).getBaseValue();
     }
 
     /**
