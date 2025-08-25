@@ -18,18 +18,18 @@ import java.util.List;
 import java.util.Objects;
 
 public class LifeStealUtil {
-        /**
+    private static final NamespacedKey HEART_ID_KEY = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
+
+    /**
      * Adjusts the player's max health by the specified amount.
-     * Ensures the player's health does not fall below 2.0 (1 heart).
      *
      * @param player The player whose health is being adjusted.
      * @param amount The amount to adjust by (positive or negative).
      */
     public static void adjustMaxHealth(@NotNull Player player, double amount) {
         double currentMaxHealth = getMaxHealth(player);
-        double newMaxHealth = Math.max(2.0, currentMaxHealth + amount); // Minimum of 2 health (1 heart)
+        double newMaxHealth = currentMaxHealth + amount;
         setMaxHealth(player, newMaxHealth);
-
     }
     /**
      * Sets the player's max health to a specific value.
@@ -76,36 +76,32 @@ public class LifeStealUtil {
      * @return An ItemStack representing the custom "Heart" item with the specified quantity.
      */
     public static ItemStack createHeartItem(int quantity) {
-        // Create the ItemStack with the specified quantity
-        Material material = Material.matchMaterial(LifeStealSettings.getHeartItemID());
+        String materialName = LifeStealSettings.getHeartItemID();
+        Material material = Material.matchMaterial(materialName);
 
-        assert material != null;
+        if (material == null) {
+            LifeSteal.getInstance().getLogger().severe("Invalid material ID in config.yml: " + materialName);
+            return new ItemStack(Material.AIR); // Return an empty item to avoid errors
+        }
+
         ItemStack heart = new ItemStack(material, quantity);
-
-        // Get the ItemMeta
         ItemMeta meta = heart.getItemMeta();
+
         if (meta != null) {
-            // Set the display name
             meta.displayName(Component.text(LifeStealSettings.getHeartItemName()).color(NamedTextColor.DARK_PURPLE));
 
-            // Set the lore (description)
+            double healthPerItem = LifeStealSettings.getHealthPerItem();
+            double hearts = healthPerItem / 2.0;
+            String heartText = hearts == 1.0 ? "heart" : "hearts";
+
             meta.lore(List.of(
-                    Component.text("Gives " + formatHealth(LifeStealSettings.getHealthPerItem() / 2.0) + " permanent " +
-                            (LifeStealSettings.getHealthPerItem() == 2.0 ? "heart" : "hearts"))
-                            .color(NamedTextColor.DARK_PURPLE)
+                Component.text("Gives " + formatHealth(hearts) + " permanent " + heartText)
+                    .color(NamedTextColor.DARK_PURPLE)
             ));
 
-            // Add a harmless enchantment to create a glowing effect
             meta.addEnchant(Enchantment.MENDING, 1, true);
-
-            // Hide the enchantment details to keep the glow without showing the enchantment
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-
-            // Add custom persistent data to uniquely identify the item
-            NamespacedKey heartIDKey = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
-            meta.getPersistentDataContainer().set(heartIDKey, PersistentDataType.STRING, "heart");
-
-            // Apply the ItemMeta to the ItemStack
+            meta.getPersistentDataContainer().set(HEART_ID_KEY, PersistentDataType.STRING, "heart");
             heart.setItemMeta(meta);
         }
 
@@ -124,19 +120,10 @@ public class LifeStealUtil {
      */
 
     public static boolean isHeartItem(ItemStack item) {
-        if (item == null || item.getType() != Material.matchMaterial(LifeStealSettings.getHeartItemID())) {
-            return false; // Not a Nether Star, can't be a Heart
-        }
-
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
+        if (item == null || item.getItemMeta() == null) {
             return false;
         }
-
-        // Check for the unique persistent data
-        NamespacedKey key = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
-        String identifier = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
-
+        String identifier = item.getItemMeta().getPersistentDataContainer().get(HEART_ID_KEY, PersistentDataType.STRING);
         return "heart".equals(identifier);
     }
 }

@@ -7,6 +7,13 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.tree.ArgumentCommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import me.honeyberries.lifeSteal.command.HealthCommand;
 import me.honeyberries.lifeSteal.command.LifeStealCommand;
 import me.honeyberries.lifeSteal.command.WithdrawCommand;
@@ -16,6 +23,8 @@ import me.honeyberries.lifeSteal.listener.PlayerDeathListener;
 import me.honeyberries.lifeSteal.task.HeartRecipeDiscoveryTask;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import java.util.List;
 
@@ -91,10 +100,14 @@ public final class LifeSteal extends JavaPlugin {
     /**
      * Starts the inventory scanning task to automatically discover heart recipes.
      */
+
+    /**
+     * Starts the inventory scanning task to automatically discover heart recipes.
+     */
     private void startInventoryScanTask() {
        invScanTask = getServer().getGlobalRegionScheduler().runAtFixedRate(
                this,
-               task -> HeartRecipeDiscoveryTask.getInstance().run(),
+               new HeartRecipeDiscoveryTask(this),
                1L, // Initial delay (1 ticks)
                1L // Repeat interval (20 ticks = 1 second)
        );

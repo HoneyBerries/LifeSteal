@@ -29,6 +29,23 @@ public class LifeStealSettings {
     // Static logger instance for recording plugin-related events and errors, specifically for configuration management.
     private static final Logger LOGGER = plugin.getLogger();
 
+    // --- Configuration Keys ---
+    private static final String MAX_HEALTH_LIMIT_KEY = "max-health-limit";
+    private static final String MIN_HEALTH_LIMIT_KEY = "min-health-limit";
+    private static final String NATURAL_DEATH_HEALTH_LOST_KEY = "death-settings.natural-death.health-lost";
+    private static final String MONSTER_DEATH_HEALTH_LOST_KEY = "death-settings.monster-death.health-lost";
+    private static final String PLAYER_DEATH_HEALTH_LOST_KEY = "death-settings.player-death.health-lost";
+    private static final String PLAYER_KILL_HEALTH_GAINED_KEY = "death-settings.player-death.health-gained";
+    private static final String HEALTH_PER_ITEM_KEY = "heart-item.health-per-item";
+    private static final String ALLOW_WITHDRAW_KEY = "features.allow-withdraw.enabled";
+    private static final String ALLOW_CRAFTING_KEY = "heart-item.allow-crafting";
+    private static final String IGNORE_KEEP_INVENTORY_KEY = "features.ignore-keep-inventory.enabled";
+    private static final String HEART_ITEM_NAME_KEY = "heart-item.heart-item-name";
+    private static final String HEART_ITEM_ID_KEY = "heart-item.heart-item-id";
+    private static final String RECIPE_SHAPE_KEY = "heart-item.recipe.shape";
+    private static final String RECIPE_INGREDIENTS_KEY = "heart-item.recipe.ingredients";
+
+
     // --- Configuration Properties ---
 
     /** The maximum health a player can have. A value of 0 or less disables this limit. */
@@ -86,112 +103,119 @@ public class LifeStealSettings {
      * the loaded settings to the server console for verification.
      */
     public static void loadConfig() {
-        // Represents the configuration file in the plugin's data folder.
-        File configFile = new File(plugin.getDataFolder(), "config.yml");
-
-        // Check if the configuration file exists. If not, save the default one from the plugin's resources.
-        if (!configFile.exists()) {
-            plugin.saveResource("config.yml", false);
-        }
-
         try {
-            // Load the YAML configuration from the specified file.
+            // Ensure the default config.yml is present and load it.
+            plugin.saveDefaultConfig();
+            File configFile = new File(plugin.getDataFolder(), "config.yml");
             YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 
-            // --- Load Double Values ---
-            maxHealthLimit = config.getDouble("max-health-limit");
-            minHealthLimit = config.getDouble("min-health-limit");
-            naturalDeathHealthLost = config.getDouble("death-settings.natural-death.health-lost");
-            monsterDeathHealthLost = config.getDouble("death-settings.monster-death.health-lost");
-            playerDeathHealthLost = config.getDouble("death-settings.player-death.health-lost");
-            playerKillHealthGained = config.getDouble("death-settings.player-death.health-gained");
-            healthPerItem = config.getDouble("heart-item.health-per-item");
+            // Load all settings from the config file.
+            loadCoreSettings(config);
+            loadDeathSettings(config);
+            loadHeartItemSettings(config);
+            loadRecipe(config);
 
-            // --- Load Boolean Values ---
-            allowWithdraw = config.getBoolean("features.allow-withdraw.enabled");
-            allowCrafting = config.getBoolean("heart-item.allow-crafting");
-            ignoreKeepInventory = config.getBoolean("features.ignore-keep-inventory.enabled");
+            // Validate and adjust settings as needed.
+            validateHealthSettings();
 
-            // --- Load String Values ---
-            heartItemName = config.getString("heart-item.heart-item-name");
-            heartItemID = config.getString("heart-item.heart-item-id");
-            recipeShape = config.getStringList("heart-item.recipe.shape").toArray(new String[0]);
+            // Register or unregister the custom recipe based on the loaded config.
+            updateHeartRecipe();
 
-            // --- Load Recipe Ingredients ---
-            recipeIngredients = new HashMap<>();
-            if (config.isConfigurationSection("heart-item.recipe.ingredients")) {
-                for (String key : Objects.requireNonNull(config.getConfigurationSection("heart-item.recipe.ingredients")).getKeys(false)) {
-                    String materialName = config.getString("heart-item.recipe.ingredients." + key);
-                    if (materialName == null) {
-                        LOGGER.warning(() -> "Missing material for key: " + key + " in recipe ingredients.");
-                        continue;
-                    }
-                    Material material = Material.matchMaterial(materialName);
-                    if (material == null) {
-                        LOGGER.warning(() -> "Invalid material \"" + materialName + "\" for key: " + key + " in recipe ingredients.");
-                        continue;
-                    }
-                    recipeIngredients.put(key.charAt(0), material);
-                }
-            }
-
-            // --- Register/Unregister Custom Heart Recipe based on Configuration ---
-            NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
-            Bukkit.removeRecipe(recipeKey); // Ensure any existing recipe is removed before potentially re-registering.
-            LOGGER.log(Level.INFO, "Removed any existing heart recipe.");
-
-            if (isAllowCrafting()) {
-                // Only attempt to register the recipe if crafting is enabled and the recipe definition is valid.
-                if (recipeShape != null && recipeShape.length > 0 && !recipeIngredients.isEmpty()) {
-                    HeartRecipe.registerHeartRecipe();
-                    LOGGER.log(Level.INFO, "Registered heart recipe.");
-                } else {
-                    LOGGER.log(Level.WARNING, "Could not register heart recipe: invalid recipe definition.");
-                }
-            } else {
-                LOGGER.log(Level.INFO, "Crafting is disabled. Heart recipe not registered.");
-            }
-
-            // Make sure that min_health is not greater than max_health
-            if (minHealthLimit > maxHealthLimit && maxHealthLimit > 0) {
-                LOGGER.warning("Minimum health limit is greater than maximum health limit! Adjusting minimum health limit to defaults.");
-                minHealthLimit = 1; // Ensure min is at least 1 and less than max
-            }
-
-            // Make sure that min_health is not less than 2 (1 heart)
-            if (minHealthLimit < 1) {
-                LOGGER.warning("Minimum health limit is less than 1! Adjusting minimum health limit to defaults.");
-                minHealthLimit = 1; // Default to 1 health
-            }
-
-
-            LOGGER.log(Level.INFO, "Configuration loaded successfully.");
-
+            LOGGER.info("Configuration loaded successfully.");
         } catch (Exception e) {
-            // Catch any exceptions that occur during the configuration loading process.
             LOGGER.log(Level.SEVERE, "Failed to load config.yml. Plugin will use default values.", e);
-
-            // --- Apply Default Values in Case of Loading Failure ---
-            allowWithdraw = false;
-            allowCrafting = false;
-            ignoreKeepInventory = false;
-            maxHealthLimit = 0;
-            minHealthLimit = 1;
-            naturalDeathHealthLost = 0;
-            monsterDeathHealthLost = 0;
-            playerDeathHealthLost = 0;
-            playerKillHealthGained = 0;
-            healthPerItem = 0;
-            heartItemName = "Heart";
-            heartItemID = "NETHER_STAR";
-            recipeShape = new String[]{"XXX", "XXX", "XXX"};
-            recipeIngredients = new HashMap<>();
-
+            loadDefaultValues();
             LOGGER.warning("Plugin is running with default configuration values due to config load failure!");
         }
-
-        // Log the loaded configuration to the console.
+        // Log the final configuration.
         logConfiguration();
+    }
+
+    private static void loadCoreSettings(YamlConfiguration config) {
+        maxHealthLimit = config.getDouble(MAX_HEALTH_LIMIT_KEY, 0);
+        minHealthLimit = config.getDouble(MIN_HEALTH_LIMIT_KEY, 1);
+        allowWithdraw = config.getBoolean(ALLOW_WITHDRAW_KEY, false);
+        ignoreKeepInventory = config.getBoolean(IGNORE_KEEP_INVENTORY_KEY, false);
+    }
+
+    private static void loadDeathSettings(YamlConfiguration config) {
+        naturalDeathHealthLost = config.getDouble(NATURAL_DEATH_HEALTH_LOST_KEY, 0);
+        monsterDeathHealthLost = config.getDouble(MONSTER_DEATH_HEALTH_LOST_KEY, 0);
+        playerDeathHealthLost = config.getDouble(PLAYER_DEATH_HEALTH_LOST_KEY, 0);
+        playerKillHealthGained = config.getDouble(PLAYER_KILL_HEALTH_GAINED_KEY, 0);
+    }
+
+    private static void loadHeartItemSettings(YamlConfiguration config) {
+        healthPerItem = config.getDouble(HEALTH_PER_ITEM_KEY, 0);
+        heartItemName = config.getString(HEART_ITEM_NAME_KEY, "Heart");
+        heartItemID = config.getString(HEART_ITEM_ID_KEY, "NETHER_STAR");
+        allowCrafting = config.getBoolean(ALLOW_CRAFTING_KEY, false);
+    }
+
+    private static void loadRecipe(YamlConfiguration config) {
+        recipeShape = config.getStringList(RECIPE_SHAPE_KEY).toArray(new String[0]);
+        recipeIngredients = new HashMap<>();
+        if (config.isConfigurationSection(RECIPE_INGREDIENTS_KEY)) {
+            for (String key : Objects.requireNonNull(config.getConfigurationSection(RECIPE_INGREDIENTS_KEY)).getKeys(false)) {
+                String materialName = config.getString(RECIPE_INGREDIENTS_KEY + "." + key);
+                if (materialName == null) {
+                    LOGGER.warning(() -> "Missing material for key: " + key + " in recipe ingredients.");
+                    continue;
+                }
+                Material material = Material.matchMaterial(materialName);
+                if (material == null) {
+                    LOGGER.warning(() -> "Invalid material \"" + materialName + "\" for key: " + key + " in recipe ingredients.");
+                    continue;
+                }
+                recipeIngredients.put(key.charAt(0), material);
+            }
+        }
+    }
+
+    private static void validateHealthSettings() {
+        if (minHealthLimit > maxHealthLimit && maxHealthLimit > 0) {
+            LOGGER.warning("Minimum health limit is greater than maximum health limit! Adjusting minimum health limit to " + maxHealthLimit);
+            minHealthLimit = maxHealthLimit;
+        }
+        if (minHealthLimit < 1) {
+            LOGGER.warning("Minimum health limit cannot be less than 1. Setting to 1.");
+            minHealthLimit = 1;
+        }
+    }
+
+    private static void updateHeartRecipe() {
+        NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
+        // Always remove the old recipe before trying to add a new one.
+        Bukkit.removeRecipe(recipeKey);
+
+        if (isAllowCrafting()) {
+            boolean isRecipeValid = recipeShape != null && recipeShape.length > 0 && !recipeIngredients.isEmpty();
+            if (isRecipeValid) {
+                HeartRecipe.registerHeartRecipe();
+                LOGGER.info("Registered custom heart recipe.");
+            } else {
+                LOGGER.warning("Could not register heart recipe: invalid recipe definition in config.yml.");
+            }
+        } else {
+            LOGGER.info("Crafting is disabled. Heart recipe not registered.");
+        }
+    }
+
+    private static void loadDefaultValues() {
+        maxHealthLimit = 0;
+        minHealthLimit = 1;
+        naturalDeathHealthLost = 0;
+        monsterDeathHealthLost = 0;
+        playerDeathHealthLost = 0;
+        playerKillHealthGained = 0;
+        healthPerItem = 0;
+        allowWithdraw = false;
+        allowCrafting = false;
+        ignoreKeepInventory = false;
+        heartItemName = "Heart";
+        heartItemID = "NETHER_STAR";
+        recipeShape = new String[0];
+        recipeIngredients = new HashMap<>();
     }
 
     /**
@@ -199,43 +223,15 @@ public class LifeStealSettings {
      * This is useful for administrators to quickly verify the plugin's configuration.
      */
     private static void logConfiguration() {
-        LOGGER.log(Level.INFO, "----------- LifeSteal Configuration -----------");
-
-        LOGGER.log(Level.INFO, "--- Health Limits ---");
-        LOGGER.log(Level.INFO, "  Max Health: " + (maxHealthLimit > 0 ? maxHealthLimit : "Disabled"));
-        LOGGER.log(Level.INFO, "  Min Health: " + (minHealthLimit > 0 ? minHealthLimit : "Disabled"));
-
-        LOGGER.log(Level.INFO, "--- Death Settings ---");
-        LOGGER.log(Level.INFO, "  Natural Death HP Loss: " + naturalDeathHealthLost);
-        LOGGER.log(Level.INFO, "  Monster Death HP Loss: " + monsterDeathHealthLost);
-        LOGGER.log(Level.INFO, "  Player Death HP Loss: " + playerDeathHealthLost);
-        LOGGER.log(Level.INFO, "  Player Kill HP Gain: " + playerKillHealthGained);
-
-        LOGGER.log(Level.INFO, "--- Heart Item Configuration ---");
-        LOGGER.log(Level.INFO, "  Health Per Item: " + healthPerItem);
-        LOGGER.log(Level.INFO, "  Item Name: '" + heartItemName + "'");
-        LOGGER.log(Level.INFO, "  Material ID: " + heartItemID);
-        LOGGER.log(Level.INFO, "  Allow Crafting: " + allowCrafting);
-        if (allowCrafting && recipeShape != null) {
-            LOGGER.log(Level.INFO, "  Recipe Shape:");
-            for (String row : recipeShape) {
-                LOGGER.log(Level.INFO, "    " + row);
-            }
-            if (!recipeIngredients.isEmpty()) {
-                LOGGER.log(Level.INFO, "  Recipe Ingredients:");
-                for (Map.Entry<Character, Material> entry : recipeIngredients.entrySet()) {
-                    LOGGER.log(Level.INFO, "    " + entry.getKey() + ": " + entry.getValue());
-                }
-            } else {
-                LOGGER.log(Level.WARNING, "  Recipe Ingredients are empty.");
-            }
+        LOGGER.info("----------- LifeSteal Configuration -----------");
+        LOGGER.info("Health Limits: Max = " + (maxHealthLimit > 0 ? maxHealthLimit : "Disabled") + ", Min = " + minHealthLimit);
+        LOGGER.info("Death Settings: Natural Loss = " + naturalDeathHealthLost + ", Monster Loss = " + monsterDeathHealthLost + ", Player Loss = " + playerDeathHealthLost + ", Player Gain = " + playerKillHealthGained);
+        LOGGER.info("Heart Item: Health = " + healthPerItem + ", Name = '" + heartItemName + "', Material = " + heartItemID + ", Crafting = " + allowCrafting);
+        if (allowCrafting) {
+            LOGGER.info("  Recipe Ingredients: " + recipeIngredients.size() + " ingredients defined.");
         }
-
-        LOGGER.log(Level.INFO, "--- Feature Settings ---");
-        LOGGER.log(Level.INFO, "  Allow Withdraw: " + allowWithdraw);
-        LOGGER.log(Level.INFO, "  Ignore KeepInventory: " + ignoreKeepInventory);
-
-        LOGGER.log(Level.INFO, "--------------------------------------------");
+        LOGGER.info("Features: Allow Withdraw = " + allowWithdraw + ", Ignore KeepInventory = " + ignoreKeepInventory);
+        LOGGER.info("--------------------------------------------");
     }
 
     /**
