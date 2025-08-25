@@ -105,38 +105,17 @@ public class PlayerDeathListener implements Listener {
      * @param victim The player who died.
      */
     private void handleNaturalDeath(@NotNull Player victim) {
-        // Get health lost from config
-        double healthLost = LifeStealSettings.getNaturalDeathHealthLost();
-        if (healthLost <= 0) {
-            return; // Feature disabled in config
-        }
+        double healthLost = calculateHealthLost(victim, LifeStealSettings.getNaturalDeathHealthLost());
 
-        // Calculate new health
-        double currentHealth = LifeStealUtil.getMaxHealth(victim);
-        double newHealth = currentHealth - healthLost;
-
-        // Check for minimum health limit
-        if (LifeStealSettings.isMinHealthLimitEnabled()) {
-            double minHealth = LifeStealSettings.getMinHealthLimit();
-            if (newHealth < minHealth) {
-                healthLost = currentHealth - minHealth;
-                victim.sendMessage(Component.text("Your health can't go below the minimum of ")
-                        .append(Component.text(LifeStealUtil.formatHealth(minHealth / 2.0) + " " + (minHealth == 2.0 ? "heart" : "hearts"), NamedTextColor.RED)));
-            }
-        }
-
-        // Only adjust health if there's a change
         if (healthLost > 0) {
             LifeStealUtil.adjustMaxHealth(victim, -healthLost);
             double heartsLost = healthLost / 2.0;
-
-            // Send message to the player
             victim.sendMessage(Component.text("You lost ")
-                    .append(Component.text(LifeStealUtil.formatHealth(heartsLost), NamedTextColor.RED))
-                    .append(Component.text(" " + (heartsLost == 1.0 ? "heart" : "hearts") + " due to death.")));
-
-            logger.info(victim.getName() + " lost " + healthLost + " health points (" +
-                        LifeStealUtil.formatHealth(heartsLost) + (heartsLost == 1.0 ? " heart" : " hearts") + " due to natural death.");
+                .append(Component.text(LifeStealUtil.formatHealth(heartsLost), NamedTextColor.RED))
+                .append(Component.text(" " + formatHearts(heartsLost) + " due to a natural death.")));
+            logger.info("%s lost %s health (%s %s) from a natural death.".formatted(
+                victim.getName(), LifeStealUtil.formatHealth(healthLost), LifeStealUtil.formatHealth(heartsLost), formatHearts(heartsLost)
+            ));
         }
     }
 
@@ -149,52 +128,77 @@ public class PlayerDeathListener implements Listener {
      * @param killer The player who killed the victim.
      */
     private void handlePlayerKill(@NotNull Player victim, @NotNull Player killer) {
-        double healthLost = LifeStealSettings.getPlayerDeathHealthLost();
-        double healthGained = LifeStealSettings.getPlayerKillHealthGained();
-        double victimNewHealth = LifeStealUtil.getMaxHealth(victim) - healthLost;
-        double killerNewHealth = LifeStealUtil.getMaxHealth(killer) + healthGained;
-
-        // Check for minimum health limit for victim
-        if (LifeStealSettings.isMinHealthLimitEnabled()) {
-            double minHealth = LifeStealSettings.getMinHealthLimit();
-            if (victimNewHealth < minHealth) {
-                healthLost = LifeStealUtil.getMaxHealth(victim) - minHealth;
-                if (healthLost <= 0) {
-                    healthLost = 0; // Already at or below minimum
-                } else {
-                    // Notify victim they've reached the minimum health limit
-                    victim.sendMessage(Component.text("You've reached the minimum health limit of ")
-                            .append(Component.text(LifeStealUtil.formatHealth(minHealth / 2.0) + " " + (minHealth == 2 ? "heart" : "hearts")).color(NamedTextColor.RED)));
-                }
-            }
-        }
-
-        // Check for maximum health limit for killer
-        if (LifeStealSettings.isMaxHealthLimitEnabled()) {
-            double maxHealth = LifeStealSettings.getMaxHealthLimit();
-            if (killerNewHealth > maxHealth) {
-                healthGained = maxHealth - LifeStealUtil.getMaxHealth(killer);
-                if (healthGained <= 0) {
-                    healthGained = 0; // Already at or above maximum
-                } else {
-                    // Notify killer they've reached the maximum health limit
-                    killer.sendMessage(Component.text("You've reached the maximum health limit of ")
-                            .append(Component.text(LifeStealUtil.formatHealth(maxHealth / 2.0) + " " + (maxHealth == 2 ? "heart" : "hearts")).color(NamedTextColor.RED)));
-                }
-            }
-        }
-
-        logger.info("%s was killed by %s and lost %s health points.".formatted(
-                victim.getName(), killer.getName(), LifeStealUtil.formatHealth(healthLost)));
-        logger.info("%s gained %s health points by killing %s.".formatted(
-                killer.getName(), LifeStealUtil.formatHealth(healthGained), victim.getName()));
+        double healthLost = calculateHealthLost(victim, LifeStealSettings.getPlayerDeathHealthLost());
+        double healthGained = calculateHealthGained(killer, LifeStealSettings.getPlayerKillHealthGained());
 
         if (healthLost > 0) {
             LifeStealUtil.adjustMaxHealth(victim, -healthLost);
+            double heartsLost = healthLost / 2.0;
+            victim.sendMessage(Component.text("You lost ")
+                .append(Component.text(LifeStealUtil.formatHealth(heartsLost), NamedTextColor.RED))
+                .append(Component.text(" " + formatHearts(heartsLost) + " because you were killed by " + killer.getName() + ".")));
+            logger.info("%s lost %s health (%s %s) after being killed by %s.".formatted(
+                victim.getName(), LifeStealUtil.formatHealth(healthLost), LifeStealUtil.formatHealth(heartsLost), formatHearts(heartsLost), killer.getName()
+            ));
         }
 
         if (healthGained > 0) {
             LifeStealUtil.adjustMaxHealth(killer, healthGained);
+            double heartsGained = healthGained / 2.0;
+            killer.sendMessage(Component.text("You gained ")
+                .append(Component.text(LifeStealUtil.formatHealth(heartsGained), NamedTextColor.GREEN))
+                .append(Component.text(" " + formatHearts(heartsGained) + " for killing " + victim.getName() + ".")));
+            logger.info("%s gained %s health (%s %s) for killing %s.".formatted(
+                killer.getName(), LifeStealUtil.formatHealth(healthGained), LifeStealUtil.formatHealth(heartsGained), formatHearts(heartsGained), victim.getName()
+            ));
         }
+    }
+
+    private double calculateHealthLost(Player victim, double amountToLose) {
+        if (amountToLose <= 0) {
+            return 0;
+        }
+
+        double currentHealth = LifeStealUtil.getMaxHealth(victim);
+        if (LifeStealSettings.isMinHealthLimitEnabled()) {
+            double minHealth = LifeStealSettings.getMinHealthLimit();
+            if (currentHealth <= minHealth) {
+                return 0; // Already at or below the minimum
+            }
+            if (currentHealth - amountToLose < minHealth) {
+                double adjustedLoss = currentHealth - minHealth;
+                double hearts = minHealth / 2.0;
+                victim.sendMessage(Component.text("Your health cannot go below the minimum of ")
+                    .append(Component.text(LifeStealUtil.formatHealth(hearts) + " " + formatHearts(hearts), NamedTextColor.RED)));
+                return adjustedLoss;
+            }
+        }
+        return amountToLose;
+    }
+
+    private double calculateHealthGained(Player killer, double amountToGain) {
+        if (amountToGain <= 0) {
+            return 0;
+        }
+
+        double currentHealth = LifeStealUtil.getMaxHealth(killer);
+        if (LifeStealSettings.isMaxHealthLimitEnabled()) {
+            double maxHealth = LifeStealSettings.getMaxHealthLimit();
+            if (currentHealth >= maxHealth) {
+                return 0; // Already at or above the maximum
+            }
+            if (currentHealth + amountToGain > maxHealth) {
+                double adjustedGain = maxHealth - currentHealth;
+                double hearts = maxHealth / 2.0;
+                killer.sendMessage(Component.text("Your health cannot go above the maximum of ")
+                    .append(Component.text(LifeStealUtil.formatHealth(hearts) + " " + formatHearts(hearts), NamedTextColor.RED)));
+                return adjustedGain;
+            }
+        }
+        return amountToGain;
+    }
+
+    private String formatHearts(double count) {
+        return count == 1.0 ? "heart" : "hearts";
     }
 }
