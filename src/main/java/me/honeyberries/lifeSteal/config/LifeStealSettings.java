@@ -89,6 +89,30 @@ public class LifeStealSettings {
 
     /** A map defining the ingredients of the crafting recipe. Each character in the {@link #recipeShape} maps to a {@link Material}. */
     private static Map<Character, Material> recipeIngredients;
+    
+    /** Whether elimination system is enabled. */
+    private static boolean eliminationEnabled;
+    
+    /** Elimination mode: BAN or SPECTATOR. */
+    private static String eliminationMode;
+    
+    /** Whether revival is allowed. */
+    private static boolean allowRevival;
+    
+    /** Health given when a player is revived. */
+    private static double revivalHealth;
+    
+    /** Revival item name. */
+    private static String revivalItemName;
+    
+    /** Revival item material ID. */
+    private static String revivalItemID;
+    
+    /** Health per revival item. */
+    private static double healthPerRevivalItem;
+    
+    /** Whether revival item crafting is allowed. */
+    private static boolean allowRevivalCrafting;
 
 
     /**
@@ -114,6 +138,8 @@ public class LifeStealSettings {
             loadDeathSettings(config);
             loadHeartItemSettings(config);
             loadRecipe(config);
+            loadEliminationSettings(config);
+            loadRevivalItemSettings(config);
 
             // Validate and adjust settings as needed.
             validateHealthSettings();
@@ -150,6 +176,20 @@ public class LifeStealSettings {
         heartItemName = config.getString(HEART_ITEM_NAME_KEY, "Heart");
         heartItemID = config.getString(HEART_ITEM_ID_KEY, "NETHER_STAR");
         allowCrafting = config.getBoolean(ALLOW_CRAFTING_KEY, false);
+    }
+    
+    private static void loadEliminationSettings(YamlConfiguration config) {
+        eliminationEnabled = config.getBoolean("elimination.enabled", true);
+        eliminationMode = config.getString("elimination.mode", "SPECTATOR");
+        allowRevival = config.getBoolean("elimination.allow-revival", true);
+        revivalHealth = config.getDouble("elimination.revival-health", 6);
+    }
+    
+    private static void loadRevivalItemSettings(YamlConfiguration config) {
+        revivalItemName = config.getString("revival-item.revival-item-name", "Revival Beacon");
+        revivalItemID = config.getString("revival-item.revival-item-id", "BEACON");
+        healthPerRevivalItem = config.getDouble("revival-item.health-per-revival-item", 6);
+        allowRevivalCrafting = config.getBoolean("revival-item.allow-crafting", true);
     }
 
     private static void loadRecipe(YamlConfiguration config) {
@@ -216,6 +256,14 @@ public class LifeStealSettings {
         heartItemID = "NETHER_STAR";
         recipeShape = new String[0];
         recipeIngredients = new HashMap<>();
+        eliminationEnabled = true;
+        eliminationMode = "SPECTATOR";
+        allowRevival = true;
+        revivalHealth = 6;
+        revivalItemName = "Revival Beacon";
+        revivalItemID = "BEACON";
+        healthPerRevivalItem = 6;
+        allowRevivalCrafting = true;
     }
 
     /**
@@ -382,5 +430,81 @@ public class LifeStealSettings {
      */
     public static boolean isMinHealthLimitEnabled() {
         return minHealthLimit > 0;
+    }
+    
+    /**
+     * Checks if the elimination system is enabled.
+     *
+     * @return `true` if elimination is enabled, `false` otherwise.
+     */
+    public static boolean isEliminationEnabled() {
+        return eliminationEnabled;
+    }
+    
+    /**
+     * Gets the elimination mode (BAN or SPECTATOR).
+     *
+     * @return The elimination mode.
+     */
+    @NotNull
+    public static String getEliminationMode() {
+        return eliminationMode;
+    }
+    
+    /**
+     * Checks if revival is allowed.
+     *
+     * @return `true` if revival is allowed, `false` otherwise.
+     */
+    public static boolean isAllowRevival() {
+        return allowRevival;
+    }
+    
+    /**
+     * Gets the health given when a player is revived.
+     *
+     * @return The revival health.
+     */
+    public static double getRevivalHealth() {
+        return revivalHealth;
+    }
+    
+    /**
+     * Gets the revival item name.
+     *
+     * @return The revival item name.
+     */
+    @NotNull
+    public static String getRevivalItemName() {
+        return revivalItemName;
+    }
+    
+    /**
+     * Gets the revival item material ID.
+     *
+     * @return The revival item material ID.
+     */
+    @NotNull
+    public static String getRevivalItemID() {
+        return revivalItemID;
+    }
+    
+    /**
+     * Gets the health per revival item.
+     *
+     * @return The health per revival item.
+     */
+    public static double getHealthPerRevivalItem() {
+        return healthPerRevivalItem;
+    }
+    
+    /**
+     * Checks if revival item crafting is allowed.
+     *
+     * @return `true` if revival item crafting is allowed, `false` otherwise.
+     */
+    public static boolean isAllowRevivalCrafting() {
+        return allowRevivalCrafting;
+    }
     }
 }

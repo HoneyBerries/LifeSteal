@@ -2,9 +2,9 @@ package me.honeyberries.lifeSteal.listener;
 
 import me.honeyberries.lifeSteal.LifeSteal;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
+import me.honeyberries.lifeSteal.config.Messages;
+import me.honeyberries.lifeSteal.manager.EliminationManager;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -110,12 +110,16 @@ public class PlayerDeathListener implements Listener {
         if (healthLost > 0) {
             LifeStealUtil.adjustMaxHealth(victim, -healthLost);
             double heartsLost = healthLost / 2.0;
-            victim.sendMessage(Component.text("You lost ")
-                .append(Component.text(LifeStealUtil.formatHealth(heartsLost), NamedTextColor.RED))
-                .append(Component.text(" " + formatHearts(heartsLost) + " due to a natural death.")));
+            String heartsWord = formatHearts(heartsLost);
+            victim.sendMessage(Messages.naturalDeathLoss(LifeStealUtil.formatHealth(heartsLost), heartsWord));
             logger.info("%s lost %s health (%s %s) from a natural death.".formatted(
-                victim.getName(), LifeStealUtil.formatHealth(healthLost), LifeStealUtil.formatHealth(heartsLost), formatHearts(heartsLost)
+                victim.getName(), LifeStealUtil.formatHealth(healthLost), LifeStealUtil.formatHealth(heartsLost), heartsWord
             ));
+            
+            // Check if player should be eliminated
+            if (EliminationManager.shouldBeEliminated(victim)) {
+                EliminationManager.eliminatePlayer(victim);
+            }
         }
     }
 
@@ -134,22 +138,25 @@ public class PlayerDeathListener implements Listener {
         if (healthLost > 0) {
             LifeStealUtil.adjustMaxHealth(victim, -healthLost);
             double heartsLost = healthLost / 2.0;
-            victim.sendMessage(Component.text("You lost ")
-                .append(Component.text(LifeStealUtil.formatHealth(heartsLost), NamedTextColor.RED))
-                .append(Component.text(" " + formatHearts(heartsLost) + " because you were killed by " + killer.getName() + ".")));
+            String heartsWord = formatHearts(heartsLost);
+            victim.sendMessage(Messages.playerDeathLoss(LifeStealUtil.formatHealth(heartsLost), heartsWord, killer.getName()));
             logger.info("%s lost %s health (%s %s) after being killed by %s.".formatted(
-                victim.getName(), LifeStealUtil.formatHealth(healthLost), LifeStealUtil.formatHealth(heartsLost), formatHearts(heartsLost), killer.getName()
+                victim.getName(), LifeStealUtil.formatHealth(healthLost), LifeStealUtil.formatHealth(heartsLost), heartsWord, killer.getName()
             ));
+            
+            // Check if player should be eliminated
+            if (EliminationManager.shouldBeEliminated(victim)) {
+                EliminationManager.eliminatePlayer(victim);
+            }
         }
 
         if (healthGained > 0) {
             LifeStealUtil.adjustMaxHealth(killer, healthGained);
             double heartsGained = healthGained / 2.0;
-            killer.sendMessage(Component.text("You gained ")
-                .append(Component.text(LifeStealUtil.formatHealth(heartsGained), NamedTextColor.GREEN))
-                .append(Component.text(" " + formatHearts(heartsGained) + " for killing " + victim.getName() + ".")));
+            String heartsWord = formatHearts(heartsGained);
+            killer.sendMessage(Messages.playerKillGain(LifeStealUtil.formatHealth(heartsGained), heartsWord, victim.getName()));
             logger.info("%s gained %s health (%s %s) for killing %s.".formatted(
-                killer.getName(), LifeStealUtil.formatHealth(healthGained), LifeStealUtil.formatHealth(heartsGained), formatHearts(heartsGained), victim.getName()
+                killer.getName(), LifeStealUtil.formatHealth(healthGained), LifeStealUtil.formatHealth(heartsGained), heartsWord, victim.getName()
             ));
         }
     }
@@ -168,8 +175,8 @@ public class PlayerDeathListener implements Listener {
             if (currentHealth - amountToLose < minHealth) {
                 double adjustedLoss = currentHealth - minHealth;
                 double hearts = minHealth / 2.0;
-                victim.sendMessage(Component.text("Your health cannot go below the minimum of ")
-                    .append(Component.text(LifeStealUtil.formatHealth(hearts) + " " + formatHearts(hearts), NamedTextColor.RED)));
+                String heartsWord = hearts == 1.0 ? "heart" : "hearts";
+                victim.sendMessage(Messages.minHealthReached(LifeStealUtil.formatHealth(hearts), heartsWord));
                 return adjustedLoss;
             }
         }
@@ -190,8 +197,8 @@ public class PlayerDeathListener implements Listener {
             if (currentHealth + amountToGain > maxHealth) {
                 double adjustedGain = maxHealth - currentHealth;
                 double hearts = maxHealth / 2.0;
-                killer.sendMessage(Component.text("Your health cannot go above the maximum of ")
-                    .append(Component.text(LifeStealUtil.formatHealth(hearts) + " " + formatHearts(hearts), NamedTextColor.RED)));
+                String heartsWord = hearts == 1.0 ? "heart" : "hearts";
+                killer.sendMessage(Messages.maxHealthReached(LifeStealUtil.formatHealth(hearts), heartsWord));
                 return adjustedGain;
             }
         }

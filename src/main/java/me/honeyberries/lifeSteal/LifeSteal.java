@@ -46,6 +46,9 @@ public final class LifeSteal extends JavaPlugin {
 
         // Load configuration settings
         LifeStealSettings.loadConfig();
+        
+        // Load messages
+        me.honeyberries.lifeSteal.config.Messages.loadMessages();
 
         // Register event listeners
         registerListeners();
@@ -82,6 +85,7 @@ public final class LifeSteal extends JavaPlugin {
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
         getServer().getPluginManager().registerEvents(new HeartUsageListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
     }
 
     /**
