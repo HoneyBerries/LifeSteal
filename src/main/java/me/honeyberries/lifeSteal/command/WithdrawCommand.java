@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
@@ -131,7 +132,7 @@ public class WithdrawCommand {
         String heartsWord = hearts == 1 ? "heart" : "hearts";
         String healthPoints = String.valueOf((int)(requiredHealth));
         sender.sendMessage(Messages.withdrawSuccess(String.valueOf(hearts), heartsWord, healthPoints));
-        target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
+        target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, LifeStealConstants.SOUND_VOLUME, LifeStealConstants.SOUND_PITCH);
 
         if (!sender.equals(target)) {
             target.sendMessage(Messages.withdrawSuccessOther(sender.getName(), String.valueOf(hearts), heartsWord, healthPoints));

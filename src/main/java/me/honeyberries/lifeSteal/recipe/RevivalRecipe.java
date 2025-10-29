@@ -1,7 +1,7 @@
 package me.honeyberries.lifeSteal.recipe;
 
 import me.honeyberries.lifeSteal.LifeSteal;
-import me.honeyberries.lifeSteal.config.LifeStealSettings;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -14,7 +14,7 @@ import org.bukkit.inventory.ShapedRecipe;
 public class RevivalRecipe {
     
     private static final LifeSteal plugin = LifeSteal.getInstance();
-    public static final NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_revival_recipe");
+    public static final NamespacedKey recipeKey = new NamespacedKey(plugin, LifeStealConstants.REVIVAL_RECIPE_KEY);
     
     /**
      * Registers the custom crafting recipe for the "Revival" item.

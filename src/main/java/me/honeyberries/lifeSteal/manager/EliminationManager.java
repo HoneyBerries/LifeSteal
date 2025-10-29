@@ -1,6 +1,7 @@
 package me.honeyberries.lifeSteal.manager;
 
 import me.honeyberries.lifeSteal.LifeSteal;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
@@ -21,7 +22,7 @@ import java.util.List;
 public class EliminationManager {
     
     private static final LifeSteal plugin = LifeSteal.getInstance();
-    private static final NamespacedKey ELIMINATED_KEY = new NamespacedKey(plugin, "eliminated");
+    private static final NamespacedKey ELIMINATED_KEY = new NamespacedKey(plugin, LifeStealConstants.ELIMINATED_KEY);
     
     /**
      * Checks if a player is eliminated.
@@ -143,7 +144,6 @@ public class EliminationManager {
         double currentHealth = LifeStealUtil.getMaxHealth(player);
         
         // When elimination is enabled, check if player has run out of hearts (at or below 0)
-        // Use a small epsilon to account for floating point precision
-        return currentHealth <= 0.01;
+        return currentHealth <= LifeStealConstants.MIN_HEALTH_EPSILON;
     }
 }

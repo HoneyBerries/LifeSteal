@@ -226,7 +226,7 @@ public class LifeStealSettings {
     }
 
     private static void updateHeartRecipe() {
-        NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
+        NamespacedKey recipeKey = new NamespacedKey(plugin, LifeStealConstants.HEART_RECIPE_KEY);
         // Always remove the old recipe before trying to add a new one.
         Bukkit.removeRecipe(recipeKey);
 
@@ -244,7 +244,7 @@ public class LifeStealSettings {
     }
     
     private static void updateRevivalRecipe() {
-        NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_revival_recipe");
+        NamespacedKey recipeKey = new NamespacedKey(plugin, LifeStealConstants.REVIVAL_RECIPE_KEY);
         // Always remove the old recipe before trying to add a new one.
         Bukkit.removeRecipe(recipeKey);
         

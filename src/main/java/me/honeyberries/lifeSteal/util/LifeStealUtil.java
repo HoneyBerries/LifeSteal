@@ -1,6 +1,7 @@
 package me.honeyberries.lifeSteal.util;
 
 import me.honeyberries.lifeSteal.LifeSteal;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -17,6 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Utility class for LifeSteal plugin operations.
+ * Provides helper methods for health management and item creation.
+ */
 public class LifeStealUtil {
     private static final NamespacedKey HEART_ID_KEY = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
     private static final NamespacedKey REVIVAL_ID_KEY = new NamespacedKey(LifeSteal.getInstance(), "unique_revival_id");
@@ -92,7 +97,7 @@ public class LifeStealUtil {
             meta.displayName(Component.text(LifeStealSettings.getHeartItemName()).color(NamedTextColor.DARK_PURPLE));
 
             double healthPerItem = LifeStealSettings.getHealthPerItem();
-            double hearts = healthPerItem / 2.0;
+            double hearts = healthPerItem / LifeStealConstants.HEALTH_POINTS_PER_HEART;
             String heartText = hearts == 1.0 ? "heart" : "hearts";
 
             meta.lore(List.of(
@@ -102,7 +107,7 @@ public class LifeStealUtil {
 
             meta.addEnchant(Enchantment.MENDING, 1, true);
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            meta.getPersistentDataContainer().set(HEART_ID_KEY, PersistentDataType.STRING, "heart");
+            meta.getPersistentDataContainer().set(HEART_ID_KEY, PersistentDataType.STRING, LifeStealConstants.HEART_ID);
             heart.setItemMeta(meta);
         }
 
@@ -125,7 +130,7 @@ public class LifeStealUtil {
             return false;
         }
         String identifier = item.getItemMeta().getPersistentDataContainer().get(HEART_ID_KEY, PersistentDataType.STRING);
-        return "heart".equals(identifier);
+        return LifeStealConstants.HEART_ID.equals(identifier);
     }
     
     /**
@@ -156,7 +161,7 @@ public class LifeStealUtil {
             
             meta.addEnchant(Enchantment.MENDING, 1, true);
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            meta.getPersistentDataContainer().set(REVIVAL_ID_KEY, PersistentDataType.STRING, "revival");
+            meta.getPersistentDataContainer().set(REVIVAL_ID_KEY, PersistentDataType.STRING, LifeStealConstants.REVIVAL_ID);
             revivalItem.setItemMeta(meta);
         }
         
@@ -174,7 +179,7 @@ public class LifeStealUtil {
             return false;
         }
         String identifier = item.getItemMeta().getPersistentDataContainer().get(REVIVAL_ID_KEY, PersistentDataType.STRING);
-        return "revival".equals(identifier);
+        return LifeStealConstants.REVIVAL_ID.equals(identifier);
     }
 }
 

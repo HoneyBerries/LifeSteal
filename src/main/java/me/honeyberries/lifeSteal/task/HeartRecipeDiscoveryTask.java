@@ -1,6 +1,7 @@
 package me.honeyberries.lifeSteal.task;
 
 import me.honeyberries.lifeSteal.LifeSteal;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -27,8 +28,8 @@ public class HeartRecipeDiscoveryTask implements Runnable {
     }
 
     private void discoverRecipes(Player player) {
-        NamespacedKey heartRecipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
-        NamespacedKey revivalRecipeKey = new NamespacedKey(plugin, "custom_revival_recipe");
+        NamespacedKey heartRecipeKey = new NamespacedKey(plugin, LifeStealConstants.HEART_RECIPE_KEY);
+        NamespacedKey revivalRecipeKey = new NamespacedKey(plugin, LifeStealConstants.REVIVAL_RECIPE_KEY);
 
         if (!player.hasDiscoveredRecipe(heartRecipeKey)) {
             player.getScheduler().run(plugin, task -> player.discoverRecipe(heartRecipeKey), null);

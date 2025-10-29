@@ -115,8 +115,8 @@ public final class LifeSteal extends JavaPlugin {
        invScanTask = getServer().getGlobalRegionScheduler().runAtFixedRate(
                this,
                new HeartRecipeDiscoveryTask(this),
-               1L, // Initial delay (1 ticks)
-               1L // Repeat interval (20 ticks = 1 second)
+               LifeStealConstants.RECIPE_DISCOVERY_INITIAL_DELAY,
+               LifeStealConstants.RECIPE_DISCOVERY_REPEAT_INTERVAL
        );
    }
 

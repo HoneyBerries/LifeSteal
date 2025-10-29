@@ -1,5 +1,6 @@
 package me.honeyberries.lifeSteal.listener;
 
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
@@ -71,19 +72,19 @@ public class HeartUsageListener implements Listener {
             double currentHealth = LifeStealUtil.getMaxHealth(player);
 
             if (currentHealth >= maxHealth) {
-                double hearts = maxHealth / 2.0;
+                double hearts = maxHealth / LifeStealConstants.HEALTH_POINTS_PER_HEART;
                 String heartsWord = hearts == 1.0 ? "heart" : "hearts";
                 player.sendMessage(Messages.maxHealthLimitReached(LifeStealUtil.formatHealth(hearts), heartsWord));
-                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0F, 1.0F);
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, LifeStealConstants.SOUND_VOLUME, LifeStealConstants.SOUND_PITCH);
                 return;
             }
 
             // If adding exceeds the max, adjust the amount to add
             if (currentHealth + healthToAdd > maxHealth) {
-                double hearts = maxHealth / 2.0;
+                double hearts = maxHealth / LifeStealConstants.HEALTH_POINTS_PER_HEART;
                 String heartsWord = hearts == 1.0 ? "heart" : "hearts";
                 player.sendMessage(Messages.maxHealthLimitExceeded(LifeStealUtil.formatHealth(hearts), heartsWord));
-                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0F, 1.0F);
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, LifeStealConstants.SOUND_VOLUME, LifeStealConstants.SOUND_PITCH);
                 return;
             }
         }
@@ -92,12 +93,12 @@ public class HeartUsageListener implements Listener {
         LifeStealUtil.adjustMaxHealth(player, healthToAdd);
 
         // Provide feedback to the player
-        double hearts = healthToAdd / 2.0;
+        double hearts = healthToAdd / LifeStealConstants.HEALTH_POINTS_PER_HEART;
         String heartsWord = hearts == 1.0 ? "heart" : "hearts";
         player.sendMessage(Messages.heartUsed(LifeStealUtil.formatHealth(hearts), heartsWord));
 
         // Play a sound effect for feedback
-        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
+        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, LifeStealConstants.SOUND_VOLUME, LifeStealConstants.SOUND_PITCH);
 
         // Consume one heart item
         if (item.getAmount() > 1) {

@@ -1,6 +1,7 @@
 package me.honeyberries.lifeSteal.listener;
 
 import me.honeyberries.lifeSteal.LifeSteal;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.manager.EliminationManager;
@@ -109,7 +110,7 @@ public class PlayerDeathListener implements Listener {
 
         if (healthLost > 0) {
             LifeStealUtil.adjustMaxHealth(victim, -healthLost);
-            double heartsLost = healthLost / 2.0;
+            double heartsLost = healthLost / LifeStealConstants.HEALTH_POINTS_PER_HEART;
             String heartsWord = formatHearts(heartsLost);
             victim.sendMessage(Messages.naturalDeathLoss(LifeStealUtil.formatHealth(heartsLost), heartsWord));
             logger.info("%s lost %s health (%s %s) from a natural death.".formatted(
@@ -137,7 +138,7 @@ public class PlayerDeathListener implements Listener {
 
         if (healthLost > 0) {
             LifeStealUtil.adjustMaxHealth(victim, -healthLost);
-            double heartsLost = healthLost / 2.0;
+            double heartsLost = healthLost / LifeStealConstants.HEALTH_POINTS_PER_HEART;
             String heartsWord = formatHearts(heartsLost);
             victim.sendMessage(Messages.playerDeathLoss(LifeStealUtil.formatHealth(heartsLost), heartsWord, killer.getName()));
             logger.info("%s lost %s health (%s %s) after being killed by %s.".formatted(
@@ -152,7 +153,7 @@ public class PlayerDeathListener implements Listener {
 
         if (healthGained > 0) {
             LifeStealUtil.adjustMaxHealth(killer, healthGained);
-            double heartsGained = healthGained / 2.0;
+            double heartsGained = healthGained / LifeStealConstants.HEALTH_POINTS_PER_HEART;
             String heartsWord = formatHearts(heartsGained);
             killer.sendMessage(Messages.playerKillGain(LifeStealUtil.formatHealth(heartsGained), heartsWord, victim.getName()));
             logger.info("%s gained %s health (%s %s) for killing %s.".formatted(
@@ -176,7 +177,7 @@ public class PlayerDeathListener implements Listener {
             }
             if (currentHealth - amountToLose < minHealth) {
                 double adjustedLoss = currentHealth - minHealth;
-                double hearts = minHealth / 2.0;
+                double hearts = minHealth / LifeStealConstants.HEALTH_POINTS_PER_HEART;
                 String heartsWord = hearts == 1.0 ? "heart" : "hearts";
                 victim.sendMessage(Messages.minHealthReached(LifeStealUtil.formatHealth(hearts), heartsWord));
                 return adjustedLoss;
@@ -201,7 +202,7 @@ public class PlayerDeathListener implements Listener {
             }
             if (currentHealth + amountToGain > maxHealth) {
                 double adjustedGain = maxHealth - currentHealth;
-                double hearts = maxHealth / 2.0;
+                double hearts = maxHealth / LifeStealConstants.HEALTH_POINTS_PER_HEART;
                 String heartsWord = hearts == 1.0 ? "heart" : "hearts";
                 killer.sendMessage(Messages.maxHealthReached(LifeStealUtil.formatHealth(hearts), heartsWord));
                 return adjustedGain;

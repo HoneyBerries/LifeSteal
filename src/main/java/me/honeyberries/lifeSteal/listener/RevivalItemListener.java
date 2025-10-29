@@ -1,6 +1,7 @@
 package me.honeyberries.lifeSteal.listener;
 
 import me.honeyberries.lifeSteal.LifeSteal;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.manager.EliminationManager;
@@ -29,7 +30,6 @@ import java.util.List;
 public class RevivalItemListener implements Listener {
     
     private final LifeSteal plugin = LifeSteal.getInstance();
-    private static final String REVIVAL_GUI_TITLE = "Select Player to Revive";
     
     /**
      * Handles when a player right-clicks with a revival item.
@@ -80,7 +80,7 @@ public class RevivalItemListener implements Listener {
     private void openRevivalGUI(Player player, List<OfflinePlayer> eliminatedPlayers, ItemStack revivalItem) {
         // Create inventory with size based on number of eliminated players (round up to nearest 9)
         int size = Math.min(54, ((eliminatedPlayers.size() + 8) / 9) * 9);
-        Inventory gui = Bukkit.createInventory(null, size, Component.text(REVIVAL_GUI_TITLE));
+        Inventory gui = Bukkit.createInventory(null, size, Component.text(LifeStealConstants.REVIVAL_GUI_TITLE));
         
         // Add player heads for each eliminated player
         for (int i = 0; i < eliminatedPlayers.size() && i < size; i++) {
@@ -102,7 +102,7 @@ public class RevivalItemListener implements Listener {
         }
         
         player.openInventory(gui);
-        player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0F, 1.0F);
+        player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, LifeStealConstants.SOUND_VOLUME, LifeStealConstants.SOUND_PITCH);
     }
     
     /**
@@ -115,7 +115,7 @@ public class RevivalItemListener implements Listener {
             return;
         }
         
-        if (!event.getView().title().equals(Component.text(REVIVAL_GUI_TITLE))) {
+        if (!event.getView().title().equals(Component.text(LifeStealConstants.REVIVAL_GUI_TITLE))) {
             return;
         }
         
@@ -161,7 +161,7 @@ public class RevivalItemListener implements Listener {
                 
                 // Send success message
                 double revivalHealth = LifeStealSettings.getRevivalHealth();
-                double hearts = revivalHealth / 2.0;
+                double hearts = revivalHealth / LifeStealConstants.HEALTH_POINTS_PER_HEART;
                 String heartsWord = hearts == 1.0 ? "heart" : "hearts";
                 player.sendMessage(Messages.playerRevived(
                     toRevive.getName() != null ? toRevive.getName() : "Unknown",
@@ -178,10 +178,10 @@ public class RevivalItemListener implements Listener {
                     ));
                 }
                 
-                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
+                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, LifeStealConstants.SOUND_VOLUME, LifeStealConstants.SOUND_PITCH);
             } else {
                 player.sendMessage(Component.text("Failed to revive player.").color(NamedTextColor.RED));
-                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0F, 1.0F);
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, LifeStealConstants.SOUND_VOLUME, LifeStealConstants.SOUND_PITCH);
             }
         }, null);
     }
