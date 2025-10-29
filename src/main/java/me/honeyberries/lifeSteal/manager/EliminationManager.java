@@ -141,9 +141,9 @@ public class EliminationManager {
         }
         
         double currentHealth = LifeStealUtil.getMaxHealth(player);
-        double minHealth = LifeStealSettings.getMinHealthLimit();
         
-        // Player should be eliminated if their health is at or below minimum
-        return currentHealth <= minHealth;
+        // When elimination is enabled, check if player has run out of hearts (at or below 0)
+        // Use a small epsilon to account for floating point precision
+        return currentHealth <= 0.01;
     }
 }

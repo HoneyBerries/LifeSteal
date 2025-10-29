@@ -167,7 +167,9 @@ public class PlayerDeathListener implements Listener {
         }
 
         double currentHealth = LifeStealUtil.getMaxHealth(victim);
-        if (LifeStealSettings.isMinHealthLimitEnabled()) {
+        
+        // If elimination is disabled, enforce minimum health limit strictly
+        if (!LifeStealSettings.isEliminationEnabled() && LifeStealSettings.isMinHealthLimitEnabled()) {
             double minHealth = LifeStealSettings.getMinHealthLimit();
             if (currentHealth <= minHealth) {
                 return 0; // Already at or below the minimum
@@ -180,6 +182,9 @@ public class PlayerDeathListener implements Listener {
                 return adjustedLoss;
             }
         }
+        
+        // If elimination is enabled, allow health to go to 0 (or below minimum)
+        // The elimination check will happen after health is reduced
         return amountToLose;
     }
 

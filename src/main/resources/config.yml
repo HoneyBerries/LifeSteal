@@ -102,10 +102,18 @@ death-settings:
 
 
 # Elimination settings
+# When elimination is ENABLED:
+#   - Players can lose health below the minimum health limit
+#   - Players who reach 0 health are eliminated (BAN or SPECTATOR mode)
+#   - Minimum health limit does not prevent elimination
+# When elimination is DISABLED:
+#   - Players cannot lose health below the minimum health limit on death
+#   - Players will stay at minimum health when dying
+#   - No elimination occurs
 elimination:
   # Whether elimination is enabled
   enabled: true
-  # What happens when a player is eliminated
+  # What happens when a player is eliminated (only applies when enabled=true)
   # Options: BAN, SPECTATOR
   mode: SPECTATOR
   # If mode is SPECTATOR, set the message

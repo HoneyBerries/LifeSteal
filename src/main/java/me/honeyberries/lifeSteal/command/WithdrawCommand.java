@@ -114,7 +114,10 @@ public class WithdrawCommand {
         double requiredHealth = hearts * healthPerItem;
         double currentHealth = LifeStealUtil.getMaxHealth(target);
 
-        if (currentHealth - requiredHealth < LifeStealSettings.getMinHealthLimit()) {
+        // Always enforce minimum health limit for withdrawal to prevent accidental elimination
+        // This applies regardless of elimination settings
+        if (LifeStealSettings.isMinHealthLimitEnabled() && 
+            currentHealth - requiredHealth < LifeStealSettings.getMinHealthLimit()) {
             String heartsWord = hearts == 1 ? "heart" : "hearts";
             String requiredHearts = LifeStealUtil.formatHealth(requiredHealth / 2);
             sender.sendMessage(Messages.withdrawNotEnoughHealth(target.getName(), String.valueOf(hearts), heartsWord, requiredHearts));
