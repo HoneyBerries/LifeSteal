@@ -8,11 +8,15 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import me.honeyberries.lifeSteal.LifeSteal;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
+import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.config.Messages;
+import me.honeyberries.lifeSteal.manager.EliminationManager;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import java.util.logging.Logger;
@@ -130,6 +134,39 @@ public class HealthCommand {
                             return Command.SINGLE_SUCCESS;
                         })
                     )
+                )
+            )
+            .then(Commands.literal("eliminate")
+                .requires(source -> source.getSender().hasPermission("lifesteal.command.health.eliminate"))
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .suggests((ctx, builder) -> {
+                        Bukkit.getOnlinePlayers().stream()
+                            .map(Player::getName)
+                            .filter(name -> startsWithIgnoreCase(name, builder.getRemaining()))
+                            .forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(ctx -> {
+                        eliminatePlayer(ctx);
+                        return Command.SINGLE_SUCCESS;
+                    })
+                )
+            )
+            .then(Commands.literal("revive")
+                .requires(source -> source.getSender().hasPermission("lifesteal.command.health.revive"))
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .suggests((ctx, builder) -> {
+                        // Suggest eliminated players (both online and offline)
+                        EliminationManager.getEliminatedPlayers().stream()
+                            .map(OfflinePlayer::getName)
+                            .filter(name -> name != null && startsWithIgnoreCase(name, builder.getRemaining()))
+                            .forEach(builder::suggest);
+                        return builder.buildFuture();
+                    })
+                    .executes(ctx -> {
+                        revivePlayer(ctx);
+                        return Command.SINGLE_SUCCESS;
+                    })
                 )
             )
         .build();
@@ -258,6 +295,91 @@ public class HealthCommand {
         }
         double amount = DoubleArgumentType.getDouble(ctx, "amount");
         adjustHealth(ctx.getSource().getSender(), target, -amount);
+    }
+
+    /**
+     * Handles the '/health eliminate <player>' command to eliminate a player.
+     *
+     * @param ctx the command context.
+     */
+    private static void eliminatePlayer(CommandContext<CommandSourceStack> ctx) {
+        CommandSender sender = ctx.getSource().getSender();
+        String playerName = StringArgumentType.getString(ctx, "player");
+        Player target = Bukkit.getPlayer(playerName);
+        
+        if (target == null) {
+            sender.sendMessage(Messages.playerNotFound(playerName));
+            return;
+        }
+        
+        // Check if elimination is enabled
+        if (!LifeStealSettings.isEliminationEnabled()) {
+            sender.sendMessage(Component.text("Elimination is currently disabled on this server.", NamedTextColor.RED));
+            return;
+        }
+        
+        // Check if player is already eliminated
+        if (EliminationManager.isEliminated(target)) {
+            sender.sendMessage(Component.text(target.getName() + " is already eliminated.", NamedTextColor.RED));
+            return;
+        }
+        
+        // Eliminate the player
+        EliminationManager.eliminatePlayer(target);
+        
+        // Send confirmation to sender
+        sender.sendMessage(Component.text("You have eliminated " + target.getName() + ".", NamedTextColor.GREEN));
+        logger.info(sender.getName() + " eliminated " + target.getName());
+    }
+
+    /**
+     * Handles the '/health revive <player>' command to revive an eliminated player.
+     *
+     * @param ctx the command context.
+     */
+    private static void revivePlayer(CommandContext<CommandSourceStack> ctx) {
+        CommandSender sender = ctx.getSource().getSender();
+        String playerName = StringArgumentType.getString(ctx, "player");
+        
+        // Try to find the player (online or offline)
+        OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
+        
+        // Check if player has ever played
+        if (!target.hasPlayedBefore() && !target.isOnline()) {
+            sender.sendMessage(Component.text("Player '" + playerName + "' has never played on this server.", NamedTextColor.RED));
+            return;
+        }
+        
+        // Check if revival is allowed
+        if (!LifeStealSettings.isAllowRevival()) {
+            sender.sendMessage(Messages.revivalItemDisabled());
+            return;
+        }
+        
+        // Check if player is eliminated
+        if (!EliminationManager.isEliminated(target)) {
+            sender.sendMessage(Component.text(target.getName() + " is not eliminated.", NamedTextColor.RED));
+            return;
+        }
+        
+        // Revive the player
+        boolean success = EliminationManager.revivePlayer(target);
+        
+        if (success) {
+            double revivalHealth = LifeStealSettings.getRevivalHealth();
+            double hearts = revivalHealth / LifeStealConstants.HEALTH_POINTS_PER_HEART;
+            String heartsWord = hearts == 1.0 ? "heart" : "hearts";
+            
+            sender.sendMessage(Messages.playerRevived(
+                target.getName() != null ? target.getName() : "Unknown",
+                LifeStealUtil.formatHealth(hearts),
+                heartsWord
+            ));
+            
+            logger.info(sender.getName() + " revived " + target.getName());
+        } else {
+            sender.sendMessage(Component.text("Failed to revive " + target.getName() + ".", NamedTextColor.RED));
+        }
     }
 
 
@@ -417,6 +539,14 @@ public class HealthCommand {
         source.getSender().sendMessage(
             Component.text("/health remove <amount> <player>", NamedTextColor.AQUA)
                 .append(Component.text(" - Remove from another player's max health", NamedTextColor.GOLD))
+        );
+        source.getSender().sendMessage(
+            Component.text("/health eliminate <player>", NamedTextColor.AQUA)
+                .append(Component.text(" - Eliminate a player (requires elimination to be enabled)", NamedTextColor.GOLD))
+        );
+        source.getSender().sendMessage(
+            Component.text("/health revive <player>", NamedTextColor.AQUA)
+                .append(Component.text(" - Revive an eliminated player", NamedTextColor.GOLD))
         );
         source.getSender().sendMessage(
             Component.text("Health range: " + MIN_HEALTH + " points and above", NamedTextColor.YELLOW)
