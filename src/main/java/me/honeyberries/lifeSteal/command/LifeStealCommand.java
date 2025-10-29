@@ -6,9 +6,8 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import me.honeyberries.lifeSteal.LifeSteal;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
+import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -96,9 +95,8 @@ public class LifeStealCommand {
      */
     private static void reloadConfig(CommandSourceStack source) {
         LifeStealSettings.loadConfig();
-        source.getSender().sendMessage(
-            Component.text("LifeSteal configuration reloaded successfully!").color(NamedTextColor.GREEN)
-        );
+        Messages.loadMessages();
+        source.getSender().sendMessage(Messages.configReloaded());
     }
 
     /**
@@ -113,8 +111,6 @@ public class LifeStealCommand {
                     Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).getDefaultValue());
         }
         Bukkit.removeRecipe(recipeKey);
-        source.getSender().sendMessage(
-            Component.text("LifeSteal uninstalled successfully!").color(NamedTextColor.GREEN)
-        );
+        source.getSender().sendMessage(Messages.pluginUninstalled());
     }
 }

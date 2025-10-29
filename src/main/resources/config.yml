@@ -102,10 +102,18 @@ death-settings:
 
 
 # Elimination settings
+# When elimination is ENABLED:
+#   - Players can lose health below the minimum health limit
+#   - Players who reach 0 health are eliminated (BAN or SPECTATOR mode)
+#   - Minimum health limit does not prevent elimination
+# When elimination is DISABLED:
+#   - Players cannot lose health below the minimum health limit on death
+#   - Players will stay at minimum health when dying
+#   - No elimination occurs
 elimination:
   # Whether elimination is enabled
   enabled: true
-  # What happens when a player is eliminated
+  # What happens when a player is eliminated (only applies when enabled=true)
   # Options: BAN, SPECTATOR
   mode: SPECTATOR
   # If mode is SPECTATOR, set the message
@@ -129,6 +137,117 @@ features:
     # If false, health mechanics may not apply when keepInventory is on, depending on server settings.
     # Set to true to ensure health changes always occur on death.
     enabled: false
+
+# Customizable messages with MiniMessage formatting support
+# MiniMessage tags: <red>, <green>, <blue>, <yellow>, <gold>, <aqua>, <gray>, <bold>, <italic>, etc.
+# Available placeholders vary by message context (see individual messages)
+messages:
+  death:
+    # Message sent when player loses hearts from natural death
+    # Placeholders: {hearts}, {hearts_word}
+    natural-death-loss: "<gray>You lost <red>{hearts} {hearts_word}</red> due to a natural death."
+    
+    # Message sent when player loses hearts from being killed
+    # Placeholders: {hearts}, {hearts_word}, {killer}
+    player-death-loss: "<gray>You lost <red>{hearts} {hearts_word}</red> because you were killed by <yellow>{killer}</yellow>."
+    
+    # Message sent when player gains hearts from killing another player
+    # Placeholders: {hearts}, {hearts_word}, {victim}
+    player-kill-gain: "<gray>You gained <green>{hearts} {hearts_word}</green> for killing <yellow>{victim}</yellow>."
+    
+    # Message sent when player reaches minimum health limit
+    # Placeholders: {hearts}, {hearts_word}
+    min-health-reached: "<gray>Your health cannot go below the minimum of <red>{hearts} {hearts_word}</red>."
+    
+    # Message sent when player reaches maximum health limit
+    # Placeholders: {hearts}, {hearts_word}
+    max-health-reached: "<gray>Your health cannot go above the maximum of <gold>{hearts} {hearts_word}</gold>."
+  
+  heart-item:
+    # Message sent when player successfully uses a heart item
+    # Placeholders: {hearts}, {hearts_word}
+    used: "<gray>You gained <green>{hearts} {hearts_word}</green>!"
+    
+    # Message sent when heart items are disabled
+    disabled: "<red>Heart items are currently disabled on this server."
+    
+    # Message sent when player is at max health limit
+    # Placeholders: {hearts}, {hearts_word}
+    max-health-limit-reached: "<red>You have reached the maximum health limit of <gold>{hearts} {hearts_word}</gold>."
+    
+    # Message sent when using heart would exceed max health limit
+    # Placeholders: {hearts}, {hearts_word}
+    max-health-limit-exceeded: "<red>You will exceed the maximum health limit of <gold>{hearts} {hearts_word}</gold>."
+  
+  withdraw:
+    # Message sent when withdraw is disabled
+    disabled: "<red>Heart withdrawal is disabled on this server."
+    
+    # Message sent when player doesn't have enough health to withdraw
+    # Placeholders: {player}, {hearts}, {hearts_word}, {required_hearts}
+    not-enough-health: "<red>{player} doesn't have enough health to withdraw {hearts} {hearts_word} (requires {required_hearts} hearts)!"
+    
+    # Message sent on successful withdrawal
+    # Placeholders: {hearts}, {hearts_word}, {health_points}
+    success: "<gold>You have withdrawn <green>{hearts} {hearts_word} ({health_points} health points)</green>."
+    
+    # Message sent to other player when someone withdraws from them
+    # Placeholders: {sender}, {hearts}, {hearts_word}, {health_points}
+    success-other: "<red>{sender} has withdrawn <red>{hearts} {hearts_word} ({health_points} health points)</red> from you!"
+    
+    # Message sent when inventory is full during withdrawal
+    inventory-full: "<yellow>Warning: Some heart items were dropped due to a full inventory!"
+  
+  health:
+    # Message for viewing health
+    # Placeholders: {possessive}, {health_points}, {hearts}
+    view: "<aqua>{possessive} health: <gold>{health_points} health points</gold> <gray>(<green>{hearts} hearts</green>)</gray>"
+    
+    # Message for setting health
+    # Placeholders: {possessive}, {direction}, {old_health}, {new_health}, {new_hearts}, {color}
+    set: "<aqua>{possessive} max health has been {direction} from <gold>{old_health}</gold> to <{color}>{new_health} health points</{color}> <gray>(<red>{new_hearts} hearts</red>)</gray>"
+    
+    # Message for adding health
+    # Placeholders: {possessive}, {old_health}, {new_health}, {new_hearts}
+    add: "<aqua>{possessive} max health has been increased from <gold>{old_health}</gold> to <green>{new_health} health points</green> <gray>(<red>{new_hearts} hearts</red>)</gray>"
+    
+    # Message for removing health
+    # Placeholders: {possessive}, {old_health}, {new_health}, {new_hearts}
+    remove: "<aqua>{possessive} max health has been decreased from <gold>{old_health}</gold> to <red>{new_health} health points</red> <gray>(<red>{new_hearts} hearts</red>)</gray>"
+    
+    # Message when trying to set health to 0 or lower
+    cannot-be-zero: "<red>Health cannot be set to 0 or lower."
+  
+  elimination:
+    # Message sent when player is eliminated and set to spectator mode
+    spectator: "<red>You have been eliminated! You are now a spectator."
+    
+    # Message shown when player tries to join after being eliminated (ban mode)
+    ban-kick: "<red>You have been eliminated! You ran out of hearts."
+    
+    # Message sent when a player is revived
+    # Placeholders: {player}, {hearts}, {hearts_word}
+    player-revived: "<green>{player} has been revived and given {hearts} {hearts_word}!"
+    
+    # Message sent when there are no eliminated players
+    no-eliminated-players: "<red>There are no eliminated players to revive."
+    
+    # Message sent when revival is disabled
+    revival-disabled: "<red>Revival is currently disabled on this server."
+  
+  general:
+    # Message sent when player is not found
+    # Placeholders: {player}
+    player-not-found: "<red>Player '{player}' is not online."
+    
+    # Message sent when console must specify a player
+    console-player-required: "<red>Console must specify a player."
+    
+    # Message sent when config is reloaded
+    config-reloaded: "<green>LifeSteal configuration reloaded successfully!"
+    
+    # Message sent when plugin is uninstalled
+    plugin-uninstalled: "<green>LifeSteal uninstalled successfully!"
 
 # Note: After changing this config, restart the server or use the plugin's reload command
 # (/lifesteal reload) for changes to take effect. Test settings to ensure they work as

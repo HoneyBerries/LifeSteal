@@ -1,6 +1,7 @@
 package me.honeyberries.lifeSteal.recipe;
 
 import me.honeyberries.lifeSteal.LifeSteal;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
 import org.bukkit.Bukkit;
@@ -19,7 +20,7 @@ public class HeartRecipe {
     private static final LifeSteal plugin = LifeSteal.getInstance();
 
     // Heart recipe namespaced key
-    public static final NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
+    public static final NamespacedKey recipeKey = new NamespacedKey(plugin, LifeStealConstants.HEART_RECIPE_KEY);
 
     /**
      * Registers the custom crafting recipe for the "Heart" item.
