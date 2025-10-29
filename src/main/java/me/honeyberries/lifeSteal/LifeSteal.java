@@ -20,6 +20,8 @@ import me.honeyberries.lifeSteal.command.WithdrawCommand;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.listener.HeartUsageListener;
 import me.honeyberries.lifeSteal.listener.PlayerDeathListener;
+import me.honeyberries.lifeSteal.listener.PlayerJoinListener;
+import me.honeyberries.lifeSteal.listener.RevivalItemListener;
 import me.honeyberries.lifeSteal.task.HeartRecipeDiscoveryTask;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +88,7 @@ public final class LifeSteal extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
         getServer().getPluginManager().registerEvents(new HeartUsageListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
+        getServer().getPluginManager().registerEvents(new RevivalItemListener(), this);
     }
 
     /**

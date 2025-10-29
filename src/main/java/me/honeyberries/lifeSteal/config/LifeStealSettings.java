@@ -2,6 +2,7 @@ package me.honeyberries.lifeSteal.config;
 
 import me.honeyberries.lifeSteal.LifeSteal;
 import me.honeyberries.lifeSteal.recipe.HeartRecipe;
+import me.honeyberries.lifeSteal.recipe.RevivalRecipe;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -146,6 +147,7 @@ public class LifeStealSettings {
 
             // Register or unregister the custom recipe based on the loaded config.
             updateHeartRecipe();
+            updateRevivalRecipe();
 
             LOGGER.info("Configuration loaded successfully.");
         } catch (Exception e) {
@@ -238,6 +240,19 @@ public class LifeStealSettings {
             }
         } else {
             LOGGER.info("Crafting is disabled. Heart recipe not registered.");
+        }
+    }
+    
+    private static void updateRevivalRecipe() {
+        NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_revival_recipe");
+        // Always remove the old recipe before trying to add a new one.
+        Bukkit.removeRecipe(recipeKey);
+        
+        if (isAllowRevivalCrafting() && isAllowRevival()) {
+            RevivalRecipe.registerRevivalRecipe();
+            LOGGER.info("Registered custom revival recipe.");
+        } else {
+            LOGGER.info("Revival crafting is disabled. Revival recipe not registered.");
         }
     }
 

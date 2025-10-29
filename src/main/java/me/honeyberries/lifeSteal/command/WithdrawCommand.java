@@ -8,9 +8,8 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
+import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
@@ -77,7 +76,7 @@ public class WithdrawCommand {
     private static void withdrawHeartsFromSelf(CommandContext<CommandSourceStack> ctx, int hearts) {
         CommandSender sender = ctx.getSource().getSender();
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text("Console must specify a player.").color(NamedTextColor.RED));
+            sender.sendMessage(Messages.consolePlayerRequired());
             return;
         }
         processHeartWithdraw(sender, player, hearts);
@@ -93,7 +92,7 @@ public class WithdrawCommand {
     private static void withdrawHeartsFromOthers(CommandContext<CommandSourceStack> ctx, int hearts, Player target) {
         CommandSender sender = ctx.getSource().getSender();
         if (target == null) {
-            sender.sendMessage(Component.text("Player not found or not online.").color(NamedTextColor.RED));
+            sender.sendMessage(Messages.playerNotFound(StringArgumentType.getString(ctx, "player")));
             return;
         }
         processHeartWithdraw(sender, target, hearts);
@@ -108,7 +107,7 @@ public class WithdrawCommand {
      */
     private static void processHeartWithdraw(CommandSender sender, Player target, int hearts) {
         if (!LifeStealSettings.isAllowWithdraw()) {
-            sender.sendMessage(Component.text("Heart withdrawal is disabled on this server.").color(NamedTextColor.RED));
+            sender.sendMessage(Messages.withdrawDisabled());
             return;
         }
         double healthPerItem = LifeStealSettings.getHealthPerItem();
@@ -116,10 +115,9 @@ public class WithdrawCommand {
         double currentHealth = LifeStealUtil.getMaxHealth(target);
 
         if (currentHealth - requiredHealth < LifeStealSettings.getMinHealthLimit()) {
-            sender.sendMessage(
-                Component.text(target.getName() + " doesn't have enough health to withdraw ")
-                    .append(Component.text(hearts + " " + (hearts == 1 ? "heart" : "hearts") + " (requires " + requiredHealth / 2 + " hearts)!", NamedTextColor.RED))
-            );
+            String heartsWord = hearts == 1 ? "heart" : "hearts";
+            String requiredHearts = LifeStealUtil.formatHealth(requiredHealth / 2);
+            sender.sendMessage(Messages.withdrawNotEnoughHealth(target.getName(), String.valueOf(hearts), heartsWord, requiredHearts));
             return;
         }
 
@@ -127,24 +125,18 @@ public class WithdrawCommand {
         HashMap<Integer, ItemStack> remainingItems = target.getInventory().addItem(heartItem);
         LifeStealUtil.adjustMaxHealth(target, -requiredHealth);
 
-        String content = String.format("%d %s (%d health points)", hearts, (hearts == 1 ? "heart" : "hearts"), hearts * 2);
-        sender.sendMessage(
-            Component.text("You have withdrawn ").color(NamedTextColor.GOLD)
-                .append(Component.text(content, NamedTextColor.GREEN))
-        );
+        String heartsWord = hearts == 1 ? "heart" : "hearts";
+        String healthPoints = String.valueOf((int)(requiredHealth));
+        sender.sendMessage(Messages.withdrawSuccess(String.valueOf(hearts), heartsWord, healthPoints));
         target.playSound(target.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
 
         if (!sender.equals(target)) {
-            target.sendMessage(
-                Component.text(sender.getName() + " has withdrawn ")
-                    .append(Component.text(content, NamedTextColor.RED))
-                    .append(Component.text(" from you!", NamedTextColor.RED))
-            );
+            target.sendMessage(Messages.withdrawSuccessOther(sender.getName(), String.valueOf(hearts), heartsWord, healthPoints));
         }
 
         if (!remainingItems.isEmpty()) {
             remainingItems.values().forEach(item -> target.getWorld().dropItemNaturally(target.getLocation(), item));
-            target.sendMessage(Component.text("Warning: Some heart items were dropped due to a full inventory!").color(NamedTextColor.YELLOW));
+            target.sendMessage(Messages.withdrawInventoryFull());
         }
     }
 

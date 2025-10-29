@@ -19,6 +19,7 @@ import java.util.Objects;
 
 public class LifeStealUtil {
     private static final NamespacedKey HEART_ID_KEY = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
+    private static final NamespacedKey REVIVAL_ID_KEY = new NamespacedKey(LifeSteal.getInstance(), "unique_revival_id");
 
     /**
      * Adjusts the player's max health by the specified amount.
@@ -125,6 +126,55 @@ public class LifeStealUtil {
         }
         String identifier = item.getItemMeta().getPersistentDataContainer().get(HEART_ID_KEY, PersistentDataType.STRING);
         return "heart".equals(identifier);
+    }
+    
+    /**
+     * Creates a custom "Revival" item that can revive eliminated players.
+     * 
+     * @param quantity The number of revival items to create
+     * @return An ItemStack representing the custom revival item with the specified quantity
+     */
+    public static ItemStack createRevivalItem(int quantity) {
+        String materialName = LifeStealSettings.getRevivalItemID();
+        Material material = Material.matchMaterial(materialName);
+        
+        if (material == null) {
+            LifeSteal.getInstance().getLogger().severe("Invalid revival material ID in config.yml: " + materialName);
+            return new ItemStack(Material.AIR);
+        }
+        
+        ItemStack revivalItem = new ItemStack(material, quantity);
+        ItemMeta meta = revivalItem.getItemMeta();
+        
+        if (meta != null) {
+            meta.displayName(Component.text(LifeStealSettings.getRevivalItemName()).color(NamedTextColor.LIGHT_PURPLE));
+            
+            meta.lore(List.of(
+                Component.text("Right-click to revive an eliminated player")
+                    .color(NamedTextColor.LIGHT_PURPLE)
+            ));
+            
+            meta.addEnchant(Enchantment.MENDING, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            meta.getPersistentDataContainer().set(REVIVAL_ID_KEY, PersistentDataType.STRING, "revival");
+            revivalItem.setItemMeta(meta);
+        }
+        
+        return revivalItem;
+    }
+    
+    /**
+     * Checks if the given ItemStack is a custom Revival item.
+     * 
+     * @param item The ItemStack to check (can be null)
+     * @return true if the item is a custom Revival item, false otherwise
+     */
+    public static boolean isRevivalItem(ItemStack item) {
+        if (item == null || item.getItemMeta() == null) {
+            return false;
+        }
+        String identifier = item.getItemMeta().getPersistentDataContainer().get(REVIVAL_ID_KEY, PersistentDataType.STRING);
+        return "revival".equals(identifier);
     }
 }
 
