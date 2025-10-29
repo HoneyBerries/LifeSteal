@@ -10,6 +10,8 @@ import io.papermc.paper.command.brigadier.Commands;
 import me.honeyberries.lifeSteal.LifeSteal;
 import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -148,9 +150,7 @@ public class HealthCommand {
      */
     private static void showSelfHealth(CommandContext<CommandSourceStack> ctx) {
         if (!(ctx.getSource().getSender() instanceof Player player)) {
-            ctx.getSource().getSender().sendMessage(
-                Component.text("This command can only be used by players.", NamedTextColor.RED)
-            );
+            ctx.getSource().getSender().sendMessage(Messages.consolePlayerRequired());
             return;
         }
         sendHealthMessage(ctx.getSource().getSender(), player);
@@ -165,9 +165,7 @@ public class HealthCommand {
         String playerName = StringArgumentType.getString(ctx, "player");
         Player target = Bukkit.getPlayer(playerName);
         if (target == null) {
-            ctx.getSource().getSender().sendMessage(
-                Component.text("Player '" + playerName + "' is not online.", NamedTextColor.RED)
-            );
+            ctx.getSource().getSender().sendMessage(Messages.playerNotFound(playerName));
             return;
         }
         sendHealthMessage(ctx.getSource().getSender(), target);
@@ -179,9 +177,7 @@ public class HealthCommand {
      */
     private static void setHealthSelf(CommandContext<CommandSourceStack> ctx) {
         if (!(ctx.getSource().getSender() instanceof Player player)) {
-            ctx.getSource().getSender().sendMessage(
-                Component.text("Console must specify a player.", NamedTextColor.RED)
-            );
+            ctx.getSource().getSender().sendMessage(Messages.consolePlayerRequired());
             return;
         }
         double amount = DoubleArgumentType.getDouble(ctx, "amount");
@@ -197,9 +193,7 @@ public class HealthCommand {
         String playerName = StringArgumentType.getString(ctx, "player");
         Player target = Bukkit.getPlayer(playerName);
         if (target == null) {
-            ctx.getSource().getSender().sendMessage(
-                Component.text("Player '" + playerName + "' is not online.", NamedTextColor.RED)
-            );
+            ctx.getSource().getSender().sendMessage(Messages.playerNotFound(playerName));
             return;
         }
         double amount = DoubleArgumentType.getDouble(ctx, "amount");
@@ -213,9 +207,7 @@ public class HealthCommand {
      */
     private static void addHealthSelf(CommandContext<CommandSourceStack> ctx) {
         if (!(ctx.getSource().getSender() instanceof Player player)) {
-            ctx.getSource().getSender().sendMessage(
-                Component.text("Console must specify a player.", NamedTextColor.RED)
-            );
+            ctx.getSource().getSender().sendMessage(Messages.consolePlayerRequired());
             return;
         }
         double amount = DoubleArgumentType.getDouble(ctx, "amount");
@@ -231,9 +223,7 @@ public class HealthCommand {
         String playerName = StringArgumentType.getString(ctx, "player");
         Player target = Bukkit.getPlayer(playerName);
         if (target == null) {
-            ctx.getSource().getSender().sendMessage(
-                Component.text("Player '" + playerName + "' is not online.", NamedTextColor.RED)
-            );
+            ctx.getSource().getSender().sendMessage(Messages.playerNotFound(playerName));
             return;
         }
         double amount = DoubleArgumentType.getDouble(ctx, "amount");
@@ -247,9 +237,7 @@ public class HealthCommand {
      */
     private static void removeHealthSelf(CommandContext<CommandSourceStack> ctx) {
         if (!(ctx.getSource().getSender() instanceof Player player)) {
-            ctx.getSource().getSender().sendMessage(
-                Component.text("Console must specify a player.", NamedTextColor.RED)
-            );
+            ctx.getSource().getSender().sendMessage(Messages.consolePlayerRequired());
             return;
         }
         double amount = DoubleArgumentType.getDouble(ctx, "amount");
@@ -265,9 +253,7 @@ public class HealthCommand {
         String playerName = StringArgumentType.getString(ctx, "player");
         Player target = Bukkit.getPlayer(playerName);
         if (target == null) {
-            ctx.getSource().getSender().sendMessage(
-                Component.text("Player '" + playerName + "' is not online.", NamedTextColor.RED)
-            );
+            ctx.getSource().getSender().sendMessage(Messages.playerNotFound(playerName));
             return;
         }
         double amount = DoubleArgumentType.getDouble(ctx, "amount");
@@ -290,6 +276,11 @@ public class HealthCommand {
             );
             return;
         }
+    private static void setHealth(CommandSender sender, Player target, double health) {
+        if (health <= MIN_HEALTH) {
+            sender.sendMessage(Messages.healthCannotBeZero());
+            return;
+        }
         double oldHealth = LifeStealUtil.getMaxHealth(target);
         LifeStealUtil.setMaxHealth(target, health);
         sendHealthUpdate(sender, target, oldHealth, health);
@@ -308,11 +299,7 @@ public class HealthCommand {
         double oldHealth = LifeStealUtil.getMaxHealth(target);
         double newHealth = oldHealth + delta;
         if (newHealth <= MIN_HEALTH) {
-            sender.sendMessage(
-                Component.text("Cannot reduce health to 0 or lower. Current health: " +
-                    String.format("%.1f", oldHealth) + ", attempted change: " +
-                    String.format("%.1f", delta), NamedTextColor.RED)
-            );
+            sender.sendMessage(Messages.healthCannotBeZero());
             return;
         }
         LifeStealUtil.setMaxHealth(target, newHealth);
@@ -330,12 +317,9 @@ public class HealthCommand {
     private static void sendHealthMessage(CommandSender viewer, Player target) {
         double health = LifeStealUtil.getMaxHealth(target);
         String possessive = viewer.equals(target) ? "Your" : target.getName() + "'s";
-        Component message = Component.text(possessive + " health: ", NamedTextColor.AQUA)
-                .append(Component.text(String.format("%.1f health points", health), NamedTextColor.GOLD))
-                .append(Component.text(" (", NamedTextColor.GRAY))
-                .append(Component.text(String.format("%.1f hearts", health / 2.0), NamedTextColor.GREEN))
-                .append(Component.text(")", NamedTextColor.GRAY));
-        viewer.sendMessage(message);
+        String healthPoints = String.format("%.1f", health);
+        String hearts = String.format("%.1f", health / 2.0);
+        viewer.sendMessage(Messages.healthView(possessive, healthPoints, hearts));
     }
 
     /**
