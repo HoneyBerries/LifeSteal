@@ -11,6 +11,8 @@ import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;

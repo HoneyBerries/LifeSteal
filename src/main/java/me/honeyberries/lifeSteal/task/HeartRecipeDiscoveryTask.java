@@ -22,8 +22,8 @@ public class HeartRecipeDiscoveryTask implements Runnable {
     public void run() {
         // Iterate through all online players on the server
         for (Player player : Bukkit.getOnlinePlayers()) {
-            // discover the heart and revival crafting recipes for each player
-            discoverRecipes(player);
+            // Schedule recipe discovery on the player's entity scheduler for Folia compatibility
+            player.getScheduler().run(plugin, task -> discoverRecipes(player), null);
         }
     }
 
@@ -31,12 +31,13 @@ public class HeartRecipeDiscoveryTask implements Runnable {
         NamespacedKey heartRecipeKey = new NamespacedKey(plugin, LifeStealConstants.HEART_RECIPE_KEY);
         NamespacedKey revivalRecipeKey = new NamespacedKey(plugin, LifeStealConstants.REVIVAL_RECIPE_KEY);
 
+        // These operations are now running on the entity scheduler, so they can be executed directly
         if (!player.hasDiscoveredRecipe(heartRecipeKey)) {
-            player.getScheduler().run(plugin, task -> player.discoverRecipe(heartRecipeKey), null);
+            player.discoverRecipe(heartRecipeKey);
         }
         
         if (!player.hasDiscoveredRecipe(revivalRecipeKey)) {
-            player.getScheduler().run(plugin, task -> player.discoverRecipe(revivalRecipeKey), null);
+            player.discoverRecipe(revivalRecipeKey);
         }
     }
 }

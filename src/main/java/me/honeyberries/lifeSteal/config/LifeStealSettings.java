@@ -45,6 +45,8 @@ public class LifeStealSettings {
     private static final String HEART_ITEM_ID_KEY = "heart-item.heart-item-id";
     private static final String RECIPE_SHAPE_KEY = "heart-item.recipe.shape";
     private static final String RECIPE_INGREDIENTS_KEY = "heart-item.recipe.ingredients";
+    private static final String REVIVAL_RECIPE_SHAPE_KEY = "revival-item.recipe.shape";
+    private static final String REVIVAL_RECIPE_INGREDIENTS_KEY = "revival-item.recipe.ingredients";
 
 
     // --- Configuration Properties ---
@@ -91,6 +93,12 @@ public class LifeStealSettings {
     /** A map defining the ingredients of the crafting recipe. Each character in the {@link #recipeShape} maps to a {@link Material}. */
     private static Map<Character, Material> recipeIngredients;
     
+    /** An array of strings defining the shape of the crafting recipe for the revival item. Each string represents a row. */
+    private static String[] revivalRecipeShape;
+
+    /** A map defining the ingredients of the crafting recipe for the revival item. Each character in the {@link #revivalRecipeShape} maps to a {@link Material}. */
+    private static Map<Character, Material> revivalRecipeIngredients;
+
     /** Whether elimination system is enabled. */
     private static boolean eliminationEnabled;
     
@@ -139,6 +147,7 @@ public class LifeStealSettings {
             loadDeathSettings(config);
             loadHeartItemSettings(config);
             loadRecipe(config);
+            loadRevivalRecipe(config);
             loadEliminationSettings(config);
             loadRevivalItemSettings(config);
 
@@ -210,6 +219,26 @@ public class LifeStealSettings {
                     continue;
                 }
                 recipeIngredients.put(key.charAt(0), material);
+            }
+        }
+    }
+
+    private static void loadRevivalRecipe(YamlConfiguration config) {
+        revivalRecipeShape = config.getStringList(REVIVAL_RECIPE_SHAPE_KEY).toArray(new String[0]);
+        revivalRecipeIngredients = new HashMap<>();
+        if (config.isConfigurationSection(REVIVAL_RECIPE_INGREDIENTS_KEY)) {
+            for (String key : Objects.requireNonNull(config.getConfigurationSection(REVIVAL_RECIPE_INGREDIENTS_KEY)).getKeys(false)) {
+                String materialName = config.getString(REVIVAL_RECIPE_INGREDIENTS_KEY + "." + key);
+                if (materialName == null) {
+                    LOGGER.warning(() -> "Missing material for key: " + key + " in revival recipe ingredients.");
+                    continue;
+                }
+                Material material = Material.matchMaterial(materialName);
+                if (material == null) {
+                    LOGGER.warning(() -> "Invalid material \"" + materialName + "\" for key: " + key + " in revival recipe ingredients.");
+                    continue;
+                }
+                revivalRecipeIngredients.put(key.charAt(0), material);
             }
         }
     }
@@ -293,6 +322,8 @@ public class LifeStealSettings {
         if (allowCrafting) {
             LOGGER.info("  Recipe Ingredients: " + recipeIngredients.size() + " ingredients defined.");
         }
+        LOGGER.info("Elimination: Enabled = " + eliminationEnabled + ", Mode = " + eliminationMode + ", Allow Revival = " + allowRevival + ", Revival Health = " + revivalHealth);
+        LOGGER.info("Revival Item: Health = " + healthPerRevivalItem + ", Name = '" + revivalItemName + "', Material = " + revivalItemID + ", Crafting = " + allowRevivalCrafting);
         LOGGER.info("Features: Allow Withdraw = " + allowWithdraw + ", Ignore KeepInventory = " + ignoreKeepInventory);
         LOGGER.info("--------------------------------------------");
     }
@@ -430,6 +461,28 @@ public class LifeStealSettings {
     }
 
     /**
+     * Returns the shape of the crafting recipe for the revival item. Each string in the array represents a row.
+     *
+     * @return An array of strings representing the revival recipe shape.
+     */
+    @NotNull
+    public static String[] getRevivalRecipeShape() {
+        return revivalRecipeShape;
+    }
+
+    /**
+     * Returns the ingredients required for the crafting recipe of the revival item.
+     * The keys in the map are the characters used in the {@link #getRevivalRecipeShape()}
+     * and the values are the corresponding {@link Material}s.
+     *
+     * @return A map of revival recipe ingredients.
+     */
+    @NotNull
+    public static Map<Character, Material> getRevivalRecipeIngredients() {
+        return revivalRecipeIngredients;
+    }
+
+    /**
      * Checks if the maximum health limit is enabled (i.e., if {@link #maxHealthLimit} is greater than 0).
      *
      * @return `true` if the maximum health limit is enabled, `false` otherwise.
@@ -520,6 +573,5 @@ public class LifeStealSettings {
      */
     public static boolean isAllowRevivalCrafting() {
         return allowRevivalCrafting;
-    }
     }
 }

@@ -393,13 +393,6 @@ public class HealthCommand {
      */
     private static void setHealth(CommandSender sender, Player target, double health) {
         if (health <= MIN_HEALTH) {
-            sender.sendMessage(
-                Component.text("Health cannot be set to 0 or lower.", NamedTextColor.RED)
-            );
-            return;
-        }
-    private static void setHealth(CommandSender sender, Player target, double health) {
-        if (health <= MIN_HEALTH) {
             sender.sendMessage(Messages.healthCannotBeZero());
             return;
         }

@@ -8,12 +8,17 @@ import me.honeyberries.lifeSteal.LifeSteal;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.config.Messages;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.logging.Level;
 
 /**
  * Handles the LifeSteal plugin commands using the Brigadier API.
@@ -94,9 +99,28 @@ public class LifeStealCommand {
      * @param source The command source (sender).
      */
     private static void reloadConfig(CommandSourceStack source) {
-        LifeStealSettings.loadConfig();
-        Messages.loadMessages();
-        source.getSender().sendMessage(Messages.configReloaded());
+        CompletableFuture<Void> reloadFuture = new CompletableFuture<>();
+
+        plugin.getServer().getGlobalRegionScheduler().execute(plugin, () -> {
+            try {
+                LifeStealSettings.loadConfig();
+                Messages.loadMessages();
+                reloadFuture.complete(null);
+            } catch (Throwable throwable) {
+                reloadFuture.completeExceptionally(throwable);
+            }
+        });
+
+        try {
+            reloadFuture.join();
+            source.getSender().sendMessage(Messages.configReloaded());
+        } catch (CompletionException exception) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to reload LifeSteal configuration", exception.getCause());
+            source.getSender().sendMessage(Component.text(
+                "Failed to reload LifeSteal configuration. Check console for details.",
+                NamedTextColor.RED
+            ));
+        }
     }
 
     /**

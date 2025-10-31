@@ -1,34 +1,21 @@
 package me.honeyberries.lifeSteal;
 
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.tree.ArgumentCommandNode;
-import com.mojang.brigadier.tree.LiteralCommandNode;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
-import io.papermc.paper.command.brigadier.Commands;
-import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.tree.ArgumentCommandNode;
-import com.mojang.brigadier.tree.LiteralCommandNode;
-import io.papermc.paper.command.brigadier.CommandSourceStack;
-import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import me.honeyberries.lifeSteal.command.HealthCommand;
 import me.honeyberries.lifeSteal.command.LifeStealCommand;
 import me.honeyberries.lifeSteal.command.WithdrawCommand;
+import me.honeyberries.lifeSteal.config.LifeStealConstants;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
 import me.honeyberries.lifeSteal.listener.HeartUsageListener;
 import me.honeyberries.lifeSteal.listener.PlayerDeathListener;
 import me.honeyberries.lifeSteal.listener.PlayerJoinListener;
 import me.honeyberries.lifeSteal.listener.RevivalItemListener;
+import me.honeyberries.lifeSteal.manager.EliminatedPlayersData;
 import me.honeyberries.lifeSteal.task.HeartRecipeDiscoveryTask;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-import java.util.List;
 
 /**
  * The main class for the LifeSteal plugin.
@@ -50,6 +37,9 @@ public final class LifeSteal extends JavaPlugin {
         LifeStealSettings.loadConfig();
         
         // Load messages
+
+        // Initialize eliminated players data
+        EliminatedPlayersData.initialize();
         me.honeyberries.lifeSteal.config.Messages.loadMessages();
 
         // Register event listeners
@@ -104,9 +94,6 @@ public final class LifeSteal extends JavaPlugin {
         );
     }
 
-    /**
-     * Starts the inventory scanning task to automatically discover heart recipes.
-     */
 
     /**
      * Starts the inventory scanning task to automatically discover heart recipes.
@@ -114,7 +101,7 @@ public final class LifeSteal extends JavaPlugin {
     private void startInventoryScanTask() {
        invScanTask = getServer().getGlobalRegionScheduler().runAtFixedRate(
                this,
-               new HeartRecipeDiscoveryTask(this),
+               task -> new HeartRecipeDiscoveryTask(this).run(),
                LifeStealConstants.RECIPE_DISCOVERY_INITIAL_DELAY,
                LifeStealConstants.RECIPE_DISCOVERY_REPEAT_INTERVAL
        );

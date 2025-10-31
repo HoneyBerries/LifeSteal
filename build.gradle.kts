@@ -27,7 +27,7 @@ dependencies {
 }
 
 group = "me.honeyberries"
-version = "1.0.0-ALPHA"
+version = "1.0.0"
 description = "LifeSteal"
 java.sourceCompatibility = JavaVersion.VERSION_21
 
