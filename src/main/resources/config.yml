@@ -7,6 +7,10 @@
 
 # Please don't intentionally break this config :)
 
+# Use elimination or friendly mode
+use-elimination: true
+elimination-mode: "BAN" # Options: "BAN", "SPECTATOR"
+
 # Maximum health limit in health points (e.g., 40 = 20 hearts)
 # This is the most health a player can have, applied to:
 # - Using heart items (via /withdraw command or similar)
@@ -63,11 +67,11 @@ heart-item:
 
 revival-item:
     # Revival item name (e.g., "Revival Heart")
-    revival-item-name: "Revival Beacon"
+    revival-item-name: Revival Beacon
 
     # Revival item identifier (e.g., "BEACON")
     # Specifies the Minecraft item type used for the revival item.
-    revival-item-id: "BEACON"
+    revival-item-id: BEACON
 
     # Health points given by each revival item when used (e.g., 4 = 2 hearts)
     health-per-revival-item: 6
@@ -79,9 +83,13 @@ revival-item:
     # Crafting recipe for the revival item in a 3x3 crafting grid
     recipe:
         ingredients: # Use H for a heart
-        G: GOLD_BLOCK       # G = Gold Block
-        A: APPLE            # A = Apple
+        N: NETHERITE_INGOT  # N = Netherite Ingot
+        A: GOLDEN_APPLE     # A = Golden Apple
+        T: TOTEM_OF_UNDYING # T = Totem of Undying
         shape:
+          - "NAN"
+          - "ATA"
+          - "NAN"
 
 
 # Configure how health is lost or gained upon different types of deaths
@@ -100,21 +108,6 @@ death-settings:
     # Set to 0 or negative to disable health gain for the killer.
     health-gained: 2
 
-
-# Elimination settings
-elimination:
-  # Whether elimination is enabled
-  enabled: true
-  # What happens when a player is eliminated
-  # Options: BAN, SPECTATOR
-  mode: SPECTATOR
-  # If mode is SPECTATOR, set the message
-  spectator-message: "You have been eliminated! You are now a spectator."
-
-  # Whether eliminated players can be revived
-  allow-revival: true
-  # Amount of health given when revived
-  revival-health: 6 # Health points for revival (e.g., 6 = 3 hearts)
 
 # Additional features and behaviors of the LifeSteal plugin
 features:
