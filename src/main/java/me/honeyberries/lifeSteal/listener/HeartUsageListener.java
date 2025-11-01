@@ -56,9 +56,9 @@ public class HeartUsageListener implements Listener {
         event.setCancelled(true);
 
         // Get the health amount to add from configuration
-        double healthToAdd = LifeStealSettings.getHealthPerItem();
+        double healthToAdd = LifeStealSettings.getHeartHpRestored();
 
-        final boolean isAllowWithdraw = LifeStealSettings.isAllowWithdraw();
+        final boolean isAllowWithdraw = LifeStealSettings.isWithdrawEnabled();
 
         // If health gain is disabled in config, inform the player and return
         if (!isAllowWithdraw) {
@@ -67,7 +67,7 @@ public class HeartUsageListener implements Listener {
         }
 
         // Check if the player has reached the maximum health limit
-        if (LifeStealSettings.isMaxHealthLimitEnabled()) {
+        if (LifeStealSettings.getMaxHealth()) {
             double maxHealth = LifeStealSettings.getMaxHealthLimit();
             double currentHealth = LifeStealUtil.getMaxHealth(player);
 

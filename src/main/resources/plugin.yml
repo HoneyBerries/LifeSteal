@@ -1,7 +1,7 @@
 name: LifeSteal
-version: '1.0.0-ALPHA'
+version: '1.0.0'
 main: me.honeyberries.lifeSteal.LifeSteal
-api-version: '1.21.7'
+api-version: '1.21.4'
 folia-supported: true
 authors: [ HoneyBerries ]
 description: A Minecraft plugin that allows players to steal hearts from each other upon death.
@@ -29,7 +29,6 @@ permissions:
     default: op
     children: [lifesteal.command.withdraw.self]
 
-
   lifesteal.command.lifesteal:
     description: Permission for the main lifesteal command.
     default: op
@@ -51,6 +50,13 @@ permissions:
     description: Allows players to modify other players' health.
     default: op
     children: [lifesteal.command.health.modify]
+  lifesteal.command.health.eliminate:
+    description: Allows players to eliminate others.
+    default: op
+  lifesteal.command.health.revive:
+    description: Allows players to revive others.
+    default: op
+
 
   lifesteal.debug.bypass:
     description: Exempts players from all LifeSteal mechanics and heart loss.

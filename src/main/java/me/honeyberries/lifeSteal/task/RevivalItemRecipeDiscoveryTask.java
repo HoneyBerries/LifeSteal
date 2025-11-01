@@ -1,20 +1,21 @@
 package me.honeyberries.lifeSteal.task;
 
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
-import me.honeyberries.lifeSteal.LifeSteal;
+import java.util.function.Consumer;
+
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 
-import java.util.function.Consumer;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import me.honeyberries.lifeSteal.LifeSteal;
 
-/**
- * Handles the automatic discovery of heart crafting recipes in the LifeSteal plugin.
- * This class periodically scans the inventories of all online players to check if they
- * possess specific items (e.g., Totem of Undying or custom Heart items) that grant access
- * to heart crafting recipes.
- */
-public record HeartRecipeDiscoveryTask(LifeSteal plugin) implements Consumer<ScheduledTask> {
+public class RevivalItemRecipeDiscoveryTask implements Consumer<ScheduledTask> {
+
+    private final LifeSteal plugin;
+
+    public RevivalItemRecipeDiscoveryTask(LifeSteal plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public void accept(ScheduledTask task) {
@@ -26,10 +27,11 @@ public record HeartRecipeDiscoveryTask(LifeSteal plugin) implements Consumer<Sch
     }
 
     private void discoverRecipe(Player player) {
-        NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
+        NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_revival_item_recipe");
 
         if (!player.hasDiscoveredRecipe(recipeKey)) {
             player.getScheduler().run(plugin, scheduledTask -> player.discoverRecipe(recipeKey), null);
         }
     }
+
 }

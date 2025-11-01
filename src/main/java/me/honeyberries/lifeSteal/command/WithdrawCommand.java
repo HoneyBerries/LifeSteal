@@ -107,15 +107,15 @@ public class WithdrawCommand {
      * @param hearts The number of hearts to withdraw.
      */
     private static void processHeartWithdraw(CommandSender sender, Player target, int hearts) {
-        if (!LifeStealSettings.isAllowWithdraw()) {
+        if (!LifeStealSettings.isWithdrawEnabled()) {
             sender.sendMessage(Component.text("Heart withdrawal is disabled on this server.").color(NamedTextColor.RED));
             return;
         }
-        double healthPerItem = LifeStealSettings.getHealthPerItem();
+        double healthPerItem = LifeStealSettings.getHeartHpRestored();
         double requiredHealth = hearts * healthPerItem;
         double currentHealth = LifeStealUtil.getMaxHealth(target);
 
-        if (currentHealth - requiredHealth < LifeStealSettings.getMinHealthLimit()) {
+        if (currentHealth - requiredHealth < LifeStealSettings.getMinHealth()) {
             sender.sendMessage(
                 Component.text(target.getName() + " doesn't have enough health to withdraw ")
                     .append(Component.text(hearts + " " + (hearts == 1 ? "heart" : "hearts") + " (requires " + requiredHealth / 2 + " hearts)!", NamedTextColor.RED))
@@ -154,7 +154,7 @@ public class WithdrawCommand {
      * @param sender The command sender.
      */
     private static void sendHelpMessage(CommandSender sender) {
-        double heartsPerItem = LifeStealSettings.getHealthPerItem() / 2.0; // Convert health to hearts
+        double heartsPerItem = LifeStealSettings.getHeartHpRestored() / 2.0; // Convert health to hearts
 
         sender.sendMessage(Component.text("---------- Withdraw Command Help ----------", NamedTextColor.GREEN));
         sender.sendMessage(Component.text("/withdraw help", NamedTextColor.AQUA)

@@ -25,8 +25,9 @@ public class LifeStealCommand {
     // Reference to the main plugin instance
     private static final LifeSteal plugin = LifeSteal.getInstance();
 
-    // Namespaced key for the custom heart recipe
-    private static final NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
+    // Namespaced key for the custom recipes
+    private static final NamespacedKey heartRecipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
+    private static final NamespacedKey revivalRecipeKey = new NamespacedKey(plugin, "custom_revival_item_recipe");
 
     /**
      * Builds the LifeSteal command tree using the Brigadier API.
@@ -102,7 +103,7 @@ public class LifeStealCommand {
     }
 
     /**
-     * Uninstalls the plugin by resetting all players' health and removing the custom recipe.
+     * Uninstalls the plugin by resetting all players' health and removing the custom recipes.
      *
      * @param source The command source (sender).
      */
@@ -112,7 +113,8 @@ public class LifeStealCommand {
             LifeStealUtil.setMaxHealth(player,
                     Objects.requireNonNull(player.getAttribute(Attribute.MAX_HEALTH)).getDefaultValue());
         }
-        Bukkit.removeRecipe(recipeKey);
+        Bukkit.removeRecipe(heartRecipeKey);
+        Bukkit.removeRecipe(revivalRecipeKey);
         source.getSender().sendMessage(
             Component.text("LifeSteal uninstalled successfully!").color(NamedTextColor.GREEN)
         );

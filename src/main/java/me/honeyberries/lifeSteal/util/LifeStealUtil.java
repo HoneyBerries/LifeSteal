@@ -19,6 +19,7 @@ import java.util.Objects;
 
 public class LifeStealUtil {
     private static final NamespacedKey HEART_ID_KEY = new NamespacedKey(LifeSteal.getInstance(), "unique_heart_id");
+    private static final NamespacedKey REVIVAL_ID_KEY = new NamespacedKey(LifeSteal.getInstance(), "unique_revival_id");
 
     /**
      * Adjusts the player's max health by the specified amount.
@@ -125,6 +126,67 @@ public class LifeStealUtil {
         }
         String identifier = item.getItemMeta().getPersistentDataContainer().get(HEART_ID_KEY, PersistentDataType.STRING);
         return "heart".equals(identifier);
+    }
+
+
+    /**
+     * Creates a custom "Revival Item" represented by a Beacon (or configured material) with unique properties.
+     * <p>
+     * This item is designed to be used in a lifesteal plugin to revive eliminated players.
+     * It features a custom display name, lore, a glowing effect, and unique metadata to distinguish it from regular items.
+     *
+     * @param quantity The number of revival items to create.
+     * @return An ItemStack representing the custom revival item with the specified quantity.
+     */
+    public static ItemStack createRevivalItem(int quantity) {
+        String materialName = LifeStealSettings.getRevivalItemID();
+        Material material = Material.matchMaterial(materialName);
+
+        if (material == null) {
+            LifeSteal.getInstance().getLogger().severe("Invalid revival item material ID in config.yml: " + materialName);
+            return new ItemStack(Material.AIR); // Return an empty item to avoid errors
+        }
+
+        ItemStack revivalItem = new ItemStack(material, quantity);
+        ItemMeta meta = revivalItem.getItemMeta();
+
+        if (meta != null) {
+            meta.displayName(Component.text(LifeStealSettings.getRevivalItemName()).color(NamedTextColor.LIGHT_PURPLE));
+
+            double healthPerRevival = LifeStealSettings.getHealthPerRevivalItem();
+            double hearts = healthPerRevival / 2.0;
+            String heartText = hearts == 1.0 ? "heart" : "hearts";
+
+            meta.lore(List.of(
+                Component.text("Revives an eliminated player").color(NamedTextColor.GOLD),
+                Component.text("Gives them " + formatHealth(hearts) + " " + heartText).color(NamedTextColor.YELLOW)
+            ));
+
+            meta.addEnchant(Enchantment.MENDING, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            meta.getPersistentDataContainer().set(REVIVAL_ID_KEY, PersistentDataType.STRING, "revival");
+            revivalItem.setItemMeta(meta);
+        }
+
+        return revivalItem;
+    }
+
+    /**
+     * Checks if the given {@link ItemStack} is a custom Revival item.
+     * <p>
+     * This method verifies that the item is a revival item and contains
+     * a unique persistent data key ("unique_revival_id") with the value "revival".
+     * This ensures accurate identification even if the item's name or lore has been modified.
+     *
+     * @param item The {@link ItemStack} to check (can be null).
+     * @return {@code true} if the item is a custom Revival item, {@code false} otherwise.
+     */
+    public static boolean isRevivalItem(ItemStack item) {
+        if (item == null || item.getItemMeta() == null) {
+            return false;
+        }
+        String identifier = item.getItemMeta().getPersistentDataContainer().get(REVIVAL_ID_KEY, PersistentDataType.STRING);
+        return "revival".equals(identifier);
     }
 }
 

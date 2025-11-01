@@ -6,9 +6,13 @@ import me.honeyberries.lifeSteal.command.HealthCommand;
 import me.honeyberries.lifeSteal.command.LifeStealCommand;
 import me.honeyberries.lifeSteal.command.WithdrawCommand;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
+import me.honeyberries.lifeSteal.listener.EliminatedPlayerJoinListener;
 import me.honeyberries.lifeSteal.listener.HeartUsageListener;
 import me.honeyberries.lifeSteal.listener.PlayerDeathListener;
+import me.honeyberries.lifeSteal.listener.RevivalItemUsageListener;
 import me.honeyberries.lifeSteal.task.HeartRecipeDiscoveryTask;
+import me.honeyberries.lifeSteal.task.RevivalItemRecipeDiscoveryTask;
+import me.honeyberries.lifeSteal.util.EliminationManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +22,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class LifeSteal extends JavaPlugin {
 
-    private ScheduledTask invScanTask; // Task for scanning player inventories
+    // Scheduled tasks for inventory scanning
+    private ScheduledTask heartItemInvScanTask;
+    private ScheduledTask revivalItemInvScanTask;
 
     /**
      * Called when the plugin is enabled.
@@ -31,12 +37,14 @@ public final class LifeSteal extends JavaPlugin {
         // Load configuration settings
         LifeStealSettings.loadConfig();
 
+        // Initialize the EliminationManager
+        EliminationManager.initialize();
+
         // Register event listeners
         registerListeners();
 
         // Register commands
         registerCommands();
-
 
         // Schedule the inventory scanning task
         startInventoryScanTask();
@@ -53,8 +61,12 @@ public final class LifeSteal extends JavaPlugin {
         getLogger().info("LifeSteal plugin is shutting down...");
 
         // Stop the inventory scanning task if it is running
-        if (invScanTask != null && !invScanTask.isCancelled()) {
-            invScanTask.cancel();
+        if (heartItemInvScanTask != null && !heartItemInvScanTask.isCancelled()) {
+            heartItemInvScanTask.cancel();
+        }
+
+        if (revivalItemInvScanTask != null && !revivalItemInvScanTask.isCancelled()) {
+            revivalItemInvScanTask.cancel();
         }
 
         getLogger().info("LifeSteal plugin has been successfully disabled!");
@@ -66,6 +78,8 @@ public final class LifeSteal extends JavaPlugin {
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new PlayerDeathListener(), this);
         getServer().getPluginManager().registerEvents(new HeartUsageListener(), this);
+        getServer().getPluginManager().registerEvents(new EliminatedPlayerJoinListener(), this);
+        getServer().getPluginManager().registerEvents(new RevivalItemUsageListener(), this);
     }
 
     /**
@@ -81,20 +95,25 @@ public final class LifeSteal extends JavaPlugin {
         );
     }
 
-    /**
-     * Starts the inventory scanning task to automatically discover heart recipes.
-     */
 
     /**
-     * Starts the inventory scanning task to automatically discover heart recipes.
+     * Starts the inventory scanning task to automatically discover heart and revival item recipes.
      */
     private void startInventoryScanTask() {
-       invScanTask = getServer().getGlobalRegionScheduler().runAtFixedRate(
+       heartItemInvScanTask = getServer().getGlobalRegionScheduler().runAtFixedRate(
                this,
                new HeartRecipeDiscoveryTask(this),
                1L, // Initial delay (1 ticks)
                1L // Repeat interval (20 ticks = 1 second)
        );
+
+       revivalItemInvScanTask = getServer().getGlobalRegionScheduler().runAtFixedRate(
+               this,
+               new RevivalItemRecipeDiscoveryTask(this),
+               1L, // Initial delay (1 ticks)
+               1L // Repeat interval (20 ticks = 1 second)
+       );
+
    }
 
     /**

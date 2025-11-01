@@ -2,6 +2,7 @@ package me.honeyberries.lifeSteal.config;
 
 import me.honeyberries.lifeSteal.LifeSteal;
 import me.honeyberries.lifeSteal.recipe.HeartRecipe;
+import me.honeyberries.lifeSteal.recipe.RevivalItemRecipe;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -16,371 +17,723 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Manages the configuration settings for the LifeSteal plugin.
+ * Manages all configuration settings for the LifeSteal plugin.
  * <p>
- * This class handles loading options from the `config.yml` file, providing
- * access to gameplay settings such as health limits, death penalties, heart item
- * properties, and crafting recipes.
+ * This class handles loading, validating, and providing access to gameplay settings
+ * from the config.yml file, including health limits, death mechanics, items, and recipes.
+ * <p>
+ * Configuration is loaded via {@link #loadConfig()} and accessed through static getter methods.
+ * All settings use safe defaults if the config file is missing or invalid.
  */
 public class LifeStealSettings {
 
-    // Static instance of the main plugin for accessing plugin-related functionalities.
-    private static final LifeSteal plugin = LifeSteal.getInstance();
-    // Static logger instance for recording plugin-related events and errors, specifically for configuration management.
-    private static final Logger LOGGER = plugin.getLogger();
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                                CONSTANTS
+    // ═══════════════════════════════════════════════════════════════════════════
 
-    // --- Configuration Keys ---
-    private static final String MAX_HEALTH_LIMIT_KEY = "max-health-limit";
-    private static final String MIN_HEALTH_LIMIT_KEY = "min-health-limit";
-    private static final String NATURAL_DEATH_HEALTH_LOST_KEY = "death-settings.natural-death.health-lost";
-    private static final String MONSTER_DEATH_HEALTH_LOST_KEY = "death-settings.monster-death.health-lost";
-    private static final String PLAYER_DEATH_HEALTH_LOST_KEY = "death-settings.player-death.health-lost";
-    private static final String PLAYER_KILL_HEALTH_GAINED_KEY = "death-settings.player-death.health-gained";
-    private static final String HEALTH_PER_ITEM_KEY = "heart-item.health-per-item";
-    private static final String ALLOW_WITHDRAW_KEY = "features.allow-withdraw.enabled";
-    private static final String ALLOW_CRAFTING_KEY = "heart-item.allow-crafting";
-    private static final String IGNORE_KEEP_INVENTORY_KEY = "features.ignore-keep-inventory.enabled";
-    private static final String HEART_ITEM_NAME_KEY = "heart-item.heart-item-name";
-    private static final String HEART_ITEM_ID_KEY = "heart-item.heart-item-id";
-    private static final String RECIPE_SHAPE_KEY = "heart-item.recipe.shape";
-    private static final String RECIPE_INGREDIENTS_KEY = "heart-item.recipe.ingredients";
+    private static final LifeSteal PLUGIN = LifeSteal.getInstance();
+    private static final Logger LOGGER = PLUGIN.getLogger();
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Config Path Constants
+    // ─────────────────────────────────────────────────────────────────────────
 
-    // --- Configuration Properties ---
+    // Player Health
+    private static final String PLAYER_HEALTH_MAX = "player-health.max";
+    private static final String PLAYER_HEALTH_MIN = "player-health.min";
 
-    /** The maximum health a player can have. A value of 0 or less disables this limit. */
-    private static double maxHealthLimit;
+    // Combat Deaths
+    private static final String PVP_VICTIM_LOSES = "on-pvp-death.victim-loses";
+    private static final String PVP_KILLER_GAINS = "on-pvp-death.killer-gains";
 
-    /** The minimum health a player can have */
-    private static double minHealthLimit;
+    // Natural Deaths
+    private static final String NATURAL_HP_LOST = "on-natural-death.hp-lost";
 
-    /** The amount of health lost upon a natural death (e.g., starvation, fall damage). */
-    private static double naturalDeathHealthLost;
+    // Elimination
+    private static final String ELIMINATION_ENABLED = "elimination.enabled";
+    private static final String ELIMINATION_MODE = "elimination.when-eliminated";
 
-    /** The amount of health lost when killed by a monster. */
-    private static double monsterDeathHealthLost;
+    // Heart Items
+    private static final String HEARTS_DISPLAY_NAME = "hearts.display-name";
+    private static final String HEARTS_ITEM_TYPE = "hearts.item-type";
+    private static final String HEARTS_HP_RESTORED = "hearts.hp-restored";
+    private static final String HEARTS_RECIPE_ENABLED = "hearts.recipe.enabled";
+    private static final String HEARTS_RECIPE_PATTERN = "hearts.recipe.pattern";
+    private static final String HEARTS_RECIPE_MATERIALS = "hearts.recipe.materials";
 
-    /** The amount of health lost when killed by another player. */
-    private static double playerDeathHealthLost;
+    // Revival
+    private static final String REVIVAL_ENABLED = "revival.enabled";
+    private static final String REVIVAL_DISPLAY_NAME = "revival.item.display-name";
+    private static final String REVIVAL_ITEM_TYPE = "revival.item.item-type";
+    private static final String REVIVAL_STARTING_HP = "revival.item.starting-hp";
+    private static final String REVIVAL_RECIPE_ENABLED = "revival.item.recipe.enabled";
+    private static final String REVIVAL_RECIPE_PATTERN = "revival.item.recipe.pattern";
+    private static final String REVIVAL_RECIPE_MATERIALS = "revival.item.recipe.materials";
 
-    /** The amount of health gained when a player kills another player. */
-    private static double playerKillHealthGained;
+    // Advanced Options
+    private static final String WITHDRAW_ENABLED = "commands.withdraw-enabled";
+    private static final String OVERRIDE_KEEP_INVENTORY = "game-rules.override-keep-inventory";
 
-    /** The amount of health restored when a player consumes a heart item. */
-    private static double healthPerItem;
-
-    /** Determines if players are allowed to withdraw health to create heart items. */
-    private static boolean allowWithdraw;
-
-    /** Determines if players are allowed to craft the heart item. */
-    private static boolean allowCrafting;
-
-    /** Determines if the plugin should ignore the server's `keepInventory` game rule when applying health loss on death. */
-    private static boolean ignoreKeepInventory;
-
-    /** The custom display name for the heart item. */
-    private static String heartItemName;
-
-    /** The Material ID (e.g., "NETHER_STAR") of the heart item. */
-    private static String heartItemID;
-
-    /** An array of strings defining the shape of the crafting recipe for the heart item. Each string represents a row. */
-    private static String[] recipeShape;
-
-    /** A map defining the ingredients of the crafting recipe. Each character in the {@link #recipeShape} maps to a {@link Material}. */
-    private static Map<Character, Material> recipeIngredients;
-
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                                  ENUMS
+    // ═══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Loads the configuration settings from the `config.yml` file.
+     * Defines what happens to players when they are eliminated (reach minimum health).
+     */
+    public enum EliminationMode {
+        /** Ban the player from the server */
+        BAN,
+        /** Change the player to spectator mode */
+        SPECTATOR
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                            CONFIGURATION FIELDS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Player Health
+    // ─────────────────────────────────────────────────────────────────────────
+    private static double maxHealth;
+    private static double minHealth;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Death Mechanics
+    // ─────────────────────────────────────────────────────────────────────────
+    private static double pvpVictimLoses;
+    private static double pvpKillerGains;
+    private static double naturalHpLost;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Elimination
+    // ─────────────────────────────────────────────────────────────────────────
+    private static boolean eliminationEnabled;
+    private static EliminationMode eliminationMode;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Heart Items
+    // ─────────────────────────────────────────────────────────────────────────
+    private static String heartDisplayName;
+    private static String heartItemType;
+    private static double heartHpRestored;
+    private static boolean heartRecipeEnabled;
+    private static String[] heartRecipePattern;
+    private static Map<Character, Material> heartRecipeMaterials;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Revival
+    // ─────────────────────────────────────────────────────────────────────────
+    private static boolean revivalEnabled;
+    private static String revivalDisplayName;
+    private static String revivalItemType;
+    private static double revivalStartingHp;
+    private static boolean revivalRecipeEnabled;
+    private static String[] revivalRecipePattern;
+    private static Map<Character, Material> revivalRecipeMaterials;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Advanced Options
+    // ─────────────────────────────────────────────────────────────────────────
+    private static boolean withdrawEnabled;
+    private static boolean overrideKeepInventory;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                          PUBLIC API - LOADING
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Loads all configuration settings from config.yml.
      * <p>
-     * If the `config.yml` file does not exist in the plugin's data folder,
-     * it will be created by copying the default configuration file from the
-     * plugin's resources. Any exceptions encountered during the loading process
-     * are caught and logged as severe errors, with default values being applied
-     * to ensure the plugin can still function (albeit with default settings).
-     * After loading, the {@link #logConfiguration()} method is called to output
-     * the loaded settings to the server console for verification.
+     * This method:
+     * <ol>
+     *   <li>Creates config.yml from defaults if it doesn't exist</li>
+     *   <li>Loads all configuration values</li>
+     *   <li>Validates settings for logical consistency</li>
+     *   <li>Registers crafting recipes if enabled</li>
+     *   <li>Logs the configuration to console</li>
+     * </ol>
+     * <p>
+     * If loading fails, safe default values are used and the plugin continues to function
+     * in a minimal state (no health changes, no elimination).
      */
     public static void loadConfig() {
         try {
-            // Ensure the default config.yml is present and load it.
-            plugin.saveDefaultConfig();
-            File configFile = new File(plugin.getDataFolder(), "config.yml");
+            PLUGIN.saveDefaultConfig();
+            File configFile = new File(PLUGIN.getDataFolder(), "config.yml");
             YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
 
-            // Load all settings from the config file.
-            loadCoreSettings(config);
-            loadDeathSettings(config);
-            loadHeartItemSettings(config);
-            loadRecipe(config);
+            loadPlayerHealth(config);
+            loadDeathMechanics(config);
+            loadElimination(config);
+            loadHeartItems(config);
+            loadRevival(config);
+            loadAdvancedOptions(config);
 
-            // Validate and adjust settings as needed.
-            validateHealthSettings();
-
-            // Register or unregister the custom recipe based on the loaded config.
-            updateHeartRecipe();
+            validateSettings();
+            registerRecipes();
 
             LOGGER.info("Configuration loaded successfully.");
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to load config.yml. Plugin will use default values.", e);
-            loadDefaultValues();
-            LOGGER.warning("Plugin is running with default configuration values due to config load failure!");
+            LOGGER.log(Level.SEVERE, "Failed to load config.yml! Using safe defaults.", e);
+            loadDefaults();
+            LOGGER.warning("Plugin running with default values (no gameplay changes).");
         }
-        // Log the final configuration.
+
         logConfiguration();
     }
 
-    private static void loadCoreSettings(YamlConfiguration config) {
-        maxHealthLimit = config.getDouble(MAX_HEALTH_LIMIT_KEY, 0);
-        minHealthLimit = config.getDouble(MIN_HEALTH_LIMIT_KEY, 1);
-        allowWithdraw = config.getBoolean(ALLOW_WITHDRAW_KEY, false);
-        ignoreKeepInventory = config.getBoolean(IGNORE_KEEP_INVENTORY_KEY, false);
-    }
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                        PRIVATE - CONFIGURATION LOADING
+    // ═══════════════════════════════════════════════════════════════════════════
 
-    private static void loadDeathSettings(YamlConfiguration config) {
-        naturalDeathHealthLost = config.getDouble(NATURAL_DEATH_HEALTH_LOST_KEY, 0);
-        monsterDeathHealthLost = config.getDouble(MONSTER_DEATH_HEALTH_LOST_KEY, 0);
-        playerDeathHealthLost = config.getDouble(PLAYER_DEATH_HEALTH_LOST_KEY, 0);
-        playerKillHealthGained = config.getDouble(PLAYER_KILL_HEALTH_GAINED_KEY, 0);
-    }
-
-    private static void loadHeartItemSettings(YamlConfiguration config) {
-        healthPerItem = config.getDouble(HEALTH_PER_ITEM_KEY, 0);
-        heartItemName = config.getString(HEART_ITEM_NAME_KEY, "Heart");
-        heartItemID = config.getString(HEART_ITEM_ID_KEY, "NETHER_STAR");
-        allowCrafting = config.getBoolean(ALLOW_CRAFTING_KEY, false);
-    }
-
-    private static void loadRecipe(YamlConfiguration config) {
-        recipeShape = config.getStringList(RECIPE_SHAPE_KEY).toArray(new String[0]);
-        recipeIngredients = new HashMap<>();
-        if (config.isConfigurationSection(RECIPE_INGREDIENTS_KEY)) {
-            for (String key : Objects.requireNonNull(config.getConfigurationSection(RECIPE_INGREDIENTS_KEY)).getKeys(false)) {
-                String materialName = config.getString(RECIPE_INGREDIENTS_KEY + "." + key);
-                if (materialName == null) {
-                    LOGGER.warning(() -> "Missing material for key: " + key + " in recipe ingredients.");
-                    continue;
-                }
-                Material material = Material.matchMaterial(materialName);
-                if (material == null) {
-                    LOGGER.warning(() -> "Invalid material \"" + materialName + "\" for key: " + key + " in recipe ingredients.");
-                    continue;
-                }
-                recipeIngredients.put(key.charAt(0), material);
-            }
-        }
-    }
-
-    private static void validateHealthSettings() {
-        if (minHealthLimit > maxHealthLimit && maxHealthLimit > 0) {
-            LOGGER.warning("Minimum health limit is greater than maximum health limit! Adjusting minimum health limit to " + maxHealthLimit);
-            minHealthLimit = maxHealthLimit;
-        }
-        if (minHealthLimit < 1) {
-            LOGGER.warning("Minimum health limit cannot be less than 1. Setting to 1.");
-            minHealthLimit = 1;
-        }
-    }
-
-    private static void updateHeartRecipe() {
-        NamespacedKey recipeKey = new NamespacedKey(plugin, "custom_heart_recipe");
-        // Always remove the old recipe before trying to add a new one.
-        Bukkit.removeRecipe(recipeKey);
-
-        if (isAllowCrafting()) {
-            boolean isRecipeValid = recipeShape != null && recipeShape.length > 0 && !recipeIngredients.isEmpty();
-            if (isRecipeValid) {
-                HeartRecipe.registerHeartRecipe();
-                LOGGER.info("Registered custom heart recipe.");
-            } else {
-                LOGGER.warning("Could not register heart recipe: invalid recipe definition in config.yml.");
-            }
-        } else {
-            LOGGER.info("Crafting is disabled. Heart recipe not registered.");
-        }
-    }
-
-    private static void loadDefaultValues() {
-        maxHealthLimit = 0;
-        minHealthLimit = 1;
-        naturalDeathHealthLost = 0;
-        monsterDeathHealthLost = 0;
-        playerDeathHealthLost = 0;
-        playerKillHealthGained = 0;
-        healthPerItem = 0;
-        allowWithdraw = false;
-        allowCrafting = false;
-        ignoreKeepInventory = false;
-        heartItemName = "Heart";
-        heartItemID = "NETHER_STAR";
-        recipeShape = new String[0];
-        recipeIngredients = new HashMap<>();
+    /**
+     * Loads player health limit settings.
+     *
+     * @param config the YAML configuration
+     */
+    private static void loadPlayerHealth(YamlConfiguration config) {
+        maxHealth = config.getDouble(PLAYER_HEALTH_MAX, -1);
+        minHealth = config.getDouble(PLAYER_HEALTH_MIN, -1);
     }
 
     /**
-     * Logs the currently loaded configuration settings to the server console.
-     * This is useful for administrators to quickly verify the plugin's configuration.
+     * Loads death mechanic settings for PvP and natural deaths.
+     *
+     * @param config the YAML configuration
+     */
+    private static void loadDeathMechanics(YamlConfiguration config) {
+        pvpVictimLoses = config.getDouble(PVP_VICTIM_LOSES, 0);
+        pvpKillerGains = config.getDouble(PVP_KILLER_GAINS, 0);
+        naturalHpLost = config.getDouble(NATURAL_HP_LOST, 0);
+    }
+
+    /**
+     * Loads elimination settings.
+     *
+     * @param config the YAML configuration
+     */
+    private static void loadElimination(YamlConfiguration config) {
+        eliminationEnabled = config.getBoolean(ELIMINATION_ENABLED, false);
+
+        String modeStr = config.getString(ELIMINATION_MODE, "SPECTATOR");
+        try {
+            eliminationMode = EliminationMode.valueOf(modeStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            LOGGER.warning("Invalid elimination mode '" + modeStr + "'. Using SPECTATOR.");
+            eliminationMode = EliminationMode.SPECTATOR;
+        }
+    }
+
+    /**
+     * Loads heart item settings including recipe.
+     *
+     * @param config the YAML configuration
+     */
+    private static void loadHeartItems(YamlConfiguration config) {
+        heartDisplayName = config.getString(HEARTS_DISPLAY_NAME, "CONFIG ERROR");
+        heartItemType = config.getString(HEARTS_ITEM_TYPE, "AIR");
+        heartHpRestored = config.getDouble(HEARTS_HP_RESTORED, 0);
+        heartRecipeEnabled = config.getBoolean(HEARTS_RECIPE_ENABLED, false);
+        heartRecipePattern = config.getStringList(HEARTS_RECIPE_PATTERN).toArray(new String[0]);
+        heartRecipeMaterials = loadRecipeMaterials(config, HEARTS_RECIPE_MATERIALS, "heart");
+    }
+
+    /**
+     * Loads revival settings including item and recipe configuration.
+     *
+     * @param config the YAML configuration
+     */
+    private static void loadRevival(YamlConfiguration config) {
+        revivalEnabled = config.getBoolean(REVIVAL_ENABLED, false);
+        revivalDisplayName = config.getString(REVIVAL_DISPLAY_NAME, "CONFIG ERROR");
+        revivalItemType = config.getString(REVIVAL_ITEM_TYPE, "AIR");
+        revivalStartingHp = config.getDouble(REVIVAL_STARTING_HP, 0);
+        revivalRecipeEnabled = config.getBoolean(REVIVAL_RECIPE_ENABLED, false);
+        revivalRecipePattern = config.getStringList(REVIVAL_RECIPE_PATTERN).toArray(new String[0]);
+        revivalRecipeMaterials = loadRecipeMaterials(config, REVIVAL_RECIPE_MATERIALS, "revival");
+    }
+
+    /**
+     * Loads advanced option settings.
+     *
+     * @param config the YAML configuration
+     */
+    private static void loadAdvancedOptions(YamlConfiguration config) {
+        withdrawEnabled = config.getBoolean(WITHDRAW_ENABLED, false);
+        overrideKeepInventory = config.getBoolean(OVERRIDE_KEEP_INVENTORY, false);
+    }
+
+    /**
+     * Loads recipe materials from the config and maps characters to Material types.
+     * <p>
+     * Invalid materials are logged as warnings and skipped.
+     *
+     * @param config the YAML configuration
+     * @param path the config path to the materials section
+     * @param recipeType a descriptive name for logging (e.g., "heart", "revival")
+     * @return a map of characters to Materials
+     */
+    private static Map<Character, Material> loadRecipeMaterials(
+            YamlConfiguration config,
+            String path,
+            String recipeType
+    ) {
+        Map<Character, Material> materials = new HashMap<>();
+
+        if (!config.isConfigurationSection(path)) {
+            return materials;
+        }
+
+        for (String key : Objects.requireNonNull(config.getConfigurationSection(path)).getKeys(false)) {
+            String materialName = config.getString(path + "." + key);
+
+            if (materialName == null) {
+                LOGGER.warning("Missing material for '" + key + "' in " + recipeType + " recipe.");
+                continue;
+            }
+
+            Material material = Material.matchMaterial(materialName);
+            if (material == null) {
+                LOGGER.warning("Invalid material '" + materialName + "' for '" + key + "' in " + recipeType + " recipe.");
+                continue;
+            }
+
+            materials.put(key.charAt(0), material);
+        }
+
+        return materials;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                      PRIVATE - VALIDATION & REGISTRATION
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Validates loaded settings for logical consistency.
+     * <p>
+     * Checks include:
+     * <ul>
+     *   <li>Minimum health not exceeding maximum health (when max is set)</li>
+     *   <li>Minimum health is at least 1 if enabled</li>
+     * </ul>
+     * Invalid settings are automatically corrected with warnings.
+     */
+    private static void validateSettings() {
+        // Validate health limits
+        if (isMaxHealthEnabled() && isMinHealthEnabled() && minHealth > maxHealth) {
+            LOGGER.warning("Minimum health (" + minHealth + ") exceeds maximum (" + maxHealth + "). Setting min = max.");
+            minHealth = maxHealth;
+        }
+
+        if (isMinHealthEnabled() && minHealth < 1) {
+            LOGGER.warning("Minimum health cannot be less than 1. Setting to 1.");
+            minHealth = 1;
+        }
+    }
+
+    /**
+     * Registers all enabled crafting recipes with the server.
+     * <p>
+     * Removes any existing recipes before registering new ones.
+     * Only registers recipes that are enabled and have valid definitions.
+     */
+    private static void registerRecipes() {
+        registerHeartRecipe();
+        registerRevivalRecipe();
+    }
+
+    /**
+     * Registers the heart item crafting recipe if enabled and valid.
+     */
+    private static void registerHeartRecipe() {
+        NamespacedKey key = new NamespacedKey(PLUGIN, "custom_heart_recipe");
+        Bukkit.removeRecipe(key);
+
+        if (!heartRecipeEnabled) {
+            LOGGER.info("Heart recipe disabled.");
+            return;
+        }
+
+        if (isRecipeValid(heartRecipePattern, heartRecipeMaterials)) {
+            HeartRecipe.registerHeartRecipe();
+            LOGGER.info("Registered heart recipe.");
+        } else {
+            LOGGER.warning("Heart recipe is invalid or incomplete. Not registered.");
+        }
+    }
+
+    /**
+     * Registers the revival item crafting recipe if enabled and valid.
+     */
+    private static void registerRevivalRecipe() {
+        NamespacedKey key = new NamespacedKey(PLUGIN, "custom_revival_item_recipe");
+        Bukkit.removeRecipe(key);
+
+        if (!revivalRecipeEnabled) {
+            LOGGER.info("Revival recipe disabled.");
+            return;
+        }
+
+        if (isRecipeValid(revivalRecipePattern, revivalRecipeMaterials)) {
+            RevivalItemRecipe.registerRevivalRecipe();
+            LOGGER.info("Registered revival recipe.");
+        } else {
+            LOGGER.warning("Revival recipe is invalid or incomplete. Not registered.");
+        }
+    }
+
+    /**
+     * Checks if a recipe definition is valid.
+     *
+     * @param pattern the recipe pattern
+     * @param materials the recipe materials
+     * @return true if valid, false otherwise
+     */
+    private static boolean isRecipeValid(String[] pattern, Map<Character, Material> materials) {
+        return pattern != null && pattern.length > 0 && !materials.isEmpty();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                          PRIVATE - DEFAULTS & LOGGING
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Loads safe default values for all settings.
+     * <p>
+     * Defaults are designed to make the plugin functionally inactive:
+     * no health changes, no elimination, no special items.
+     */
+    private static void loadDefaults() {
+        // Player Health
+        maxHealth = -1;
+        minHealth = -1;
+
+        // Death Mechanics
+        pvpVictimLoses = 0;
+        pvpKillerGains = 0;
+        naturalHpLost = 0;
+
+        // Elimination
+        eliminationEnabled = false;
+        eliminationMode = EliminationMode.SPECTATOR;
+
+        // Heart Items
+        heartDisplayName = "CONFIG ERROR";
+        heartItemType = "AIR";
+        heartHpRestored = 0;
+        heartRecipeEnabled = false;
+        heartRecipePattern = new String[0];
+        heartRecipeMaterials = new HashMap<>();
+
+        // Revival
+        revivalEnabled = false;
+        revivalDisplayName = "CONFIG ERROR";
+        revivalItemType = "AIR";
+        revivalStartingHp = 0;
+        revivalRecipeEnabled = false;
+        revivalRecipePattern = new String[0];
+        revivalRecipeMaterials = new HashMap<>();
+
+        // Advanced Options
+        withdrawEnabled = false;
+        overrideKeepInventory = false;
+    }
+
+    /**
+     * Logs the current configuration to the console for verification.
      */
     private static void logConfiguration() {
-        LOGGER.info("----------- LifeSteal Configuration -----------");
-        LOGGER.info("Health Limits: Max = " + (maxHealthLimit > 0 ? maxHealthLimit : "Disabled") + ", Min = " + minHealthLimit);
-        LOGGER.info("Death Settings: Natural Loss = " + naturalDeathHealthLost + ", Monster Loss = " + monsterDeathHealthLost + ", Player Loss = " + playerDeathHealthLost + ", Player Gain = " + playerKillHealthGained);
-        LOGGER.info("Heart Item: Health = " + healthPerItem + ", Name = '" + heartItemName + "', Material = " + heartItemID + ", Crafting = " + allowCrafting);
-        if (allowCrafting) {
-            LOGGER.info("  Recipe Ingredients: " + recipeIngredients.size() + " ingredients defined.");
-        }
-        LOGGER.info("Features: Allow Withdraw = " + allowWithdraw + ", Ignore KeepInventory = " + ignoreKeepInventory);
-        LOGGER.info("--------------------------------------------");
+        LOGGER.info("============ LifeSteal Configuration ============");
+
+        LOGGER.info("Player Health:");
+        LOGGER.info("  Max: " + (isMaxHealthEnabled() ? maxHealth + " HP" : "Disabled"));
+        LOGGER.info("  Min: " + (isMinHealthEnabled() ? minHealth + " HP" : "Disabled"));
+
+        LOGGER.info("Death Mechanics:");
+        LOGGER.info("  PvP - Victim loses: " + pvpVictimLoses + " HP, Killer gains: " + pvpKillerGains + " HP");
+        LOGGER.info("  Natural - Loses: " + naturalHpLost + " HP");
+
+        LOGGER.info("Elimination:");
+        LOGGER.info("  Enabled: " + eliminationEnabled + ", Mode: " + eliminationMode);
+
+        LOGGER.info("Heart Items:");
+        LOGGER.info("  Name: '" + heartDisplayName + "', Type: " + heartItemType);
+        LOGGER.info("  HP Restored: " + heartHpRestored + ", Recipe: " + (heartRecipeEnabled ? "Enabled" : "Disabled"));
+
+        LOGGER.info("Revival:");
+        LOGGER.info("  Enabled: " + revivalEnabled);
+        LOGGER.info("  Name: '" + revivalDisplayName + "', Type: " + revivalItemType);
+        LOGGER.info("  Starting HP: " + revivalStartingHp + ", Recipe: " + (revivalRecipeEnabled ? "Enabled" : "Disabled"));
+
+        LOGGER.info("Commands & Rules:");
+        LOGGER.info("  Withdraw: " + withdrawEnabled + ", Override KeepInventory: " + overrideKeepInventory);
+
+        LOGGER.info("=================================================");
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                        PUBLIC API - PLAYER HEALTH
+    // ═══════════════════════════════════════════════════════════════════════════
+
     /**
-     * Returns the maximum health limit for players.
+     * Gets the maximum health limit for players.
+     * <p>
+     * A value of -1 or less means no maximum limit is enforced.
      *
-     * @return The maximum health limit.
+     * @return the maximum health in HP
      */
-    public static double getMaxHealthLimit() {
-        return maxHealthLimit;
+    public static double getMaxHealth() {
+        return maxHealth;
     }
 
     /**
-     * Returns the minimum health limit for players.
+     * Gets the minimum health limit for players.
+     * <p>
+     * A value of -1 or less means no minimum limit is enforced.
      *
-     * @return The minimum health limit.
+     * @return the minimum health in HP
      */
-    public static double getMinHealthLimit() {
-        return minHealthLimit;
+    public static double getMinHealth() {
+        return minHealth;
     }
 
     /**
-     * Returns the amount of health lost upon a natural death.
+     * Checks if the maximum health limit is enabled.
      *
-     * @return The health lost on natural death.
+     * @return true if max health is greater than 0
      */
-    public static double getNaturalDeathHealthLost() {
-        return naturalDeathHealthLost;
+    public static boolean isMaxHealthEnabled() {
+        return maxHealth > 0;
     }
 
     /**
-     * Returns the amount of health lost when killed by a monster.
+     * Checks if the minimum health limit is enabled.
      *
-     * @return The health lost on monster death.
+     * @return true if min health is greater than 0
      */
-    public static double getMonsterDeathHealthLost() {
-        return monsterDeathHealthLost;
+    public static boolean isMinHealthEnabled() {
+        return minHealth > 0;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                       PUBLIC API - DEATH MECHANICS
+    // ═══════════════════════════════════════════════════════════════════════════
+
     /**
-     * Returns the amount of health lost when killed by another player.
+     * Gets the HP lost by a victim in PvP combat.
      *
-     * @return The health lost on player death.
+     * @return the HP lost by the victim
      */
-    public static double getPlayerDeathHealthLost() {
-        return playerDeathHealthLost;
+    public static double getPvpVictimLoses() {
+        return pvpVictimLoses;
     }
 
     /**
-     * Returns the amount of health gained when a player kills another player.
+     * Gets the HP gained by a killer in PvP combat.
      *
-     * @return The health gained on player kill.
+     * @return the HP gained by the killer
      */
-    public static double getPlayerKillHealthGained() {
-        return playerKillHealthGained;
+    public static double getPvpKillerGains() {
+        return pvpKillerGains;
     }
 
     /**
-     * Returns the amount of health restored when a player consumes a heart item.
+     * Gets the HP lost on natural deaths (fall damage, drowning, etc.).
      *
-     * @return The health restored per heart item.
+     * @return the HP lost on natural death
      */
-    public static double getHealthPerItem() {
-        return healthPerItem;
+    public static double getNaturalHpLost() {
+        return naturalHpLost;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                         PUBLIC API - ELIMINATION
+    // ═══════════════════════════════════════════════════════════════════════════
+
     /**
-     * Indicates whether players are allowed to withdraw health to create heart items.
+     * Checks if the elimination feature is enabled.
      *
-     * @return `true` if withdrawing is allowed, `false` otherwise.
+     * @return true if elimination is enabled
      */
-    public static boolean isAllowWithdraw() {
-        return allowWithdraw;
+    public static boolean isEliminationEnabled() {
+        return eliminationEnabled;
     }
 
     /**
-     * Indicates whether crafting of the heart item is enabled.
+     * Gets the elimination mode (BAN or SPECTATOR).
      *
-     * @return `true` if crafting is allowed, `false` otherwise.
-     */
-    public static boolean isAllowCrafting() {
-        return allowCrafting;
-    }
-
-    /**
-     * Indicates whether the plugin should ignore the server's `keepInventory` game rule.
-     *
-     * @return `true` if `keepInventory` is ignored, `false` otherwise.
-     */
-    public static boolean isIgnoreKeepInventory() {
-        return ignoreKeepInventory;
-    }
-
-    /**
-     * Returns the custom display name for the heart item.
-     *
-     * @return The heart item's name.
-     */
-    @NotNull
-    public static String getHeartItemName() {
-        return heartItemName;
-    }
-
-    /**
-     * Returns the Material ID of the heart item.
-     *
-     * @return The heart item's Material ID.
-     */
-    @NotNull
-    public static String getHeartItemID() {
-        return heartItemID;
-    }
-
-    /**
-     * Returns the shape of the crafting recipe for the heart item. Each string in the array represents a row.
-     *
-     * @return An array of strings representing the recipe shape.
+     * @return the elimination mode
      */
     @NotNull
-    public static String[] getRecipeShape() {
-        return recipeShape;
+    public static EliminationMode getEliminationMode() {
+        return eliminationMode;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                         PUBLIC API - HEART ITEMS
+    // ═══════════════════════════════════════════════════════════════════════════
+
     /**
-     * Returns the ingredients required for the crafting recipe of the heart item.
-     * The keys in the map are the characters used in the {@link #getRecipeShape()}
-     * and the values are the corresponding {@link Material}s.
+     * Gets the display name for heart items.
      *
-     * @return A map of recipe ingredients.
+     * @return the heart item display name
      */
     @NotNull
-    public static Map<Character, Material> getRecipeIngredients() {
-        return recipeIngredients;
+    public static String getHeartDisplayName() {
+        return heartDisplayName;
     }
 
     /**
-     * Checks if the maximum health limit is enabled (i.e., if {@link #maxHealthLimit} is greater than 0).
+     * Gets the item type for heart items.
      *
-     * @return `true` if the maximum health limit is enabled, `false` otherwise.
+     * @return the heart item type (Material name)
      */
-    public static boolean isMaxHealthLimitEnabled() {
-        return maxHealthLimit > 0;
+    @NotNull
+    public static String getHeartItemType() {
+        return heartItemType;
     }
 
     /**
-     * Checks if the minimum health limit is enabled (i.e., if {@link #minHealthLimit} is greater than 0).
+     * Gets the HP restored when using a heart item.
      *
-     * @return `true` if the minimum health limit is enabled, `false` otherwise.
+     * @return the HP restored
      */
-    public static boolean isMinHealthLimitEnabled() {
-        return minHealthLimit > 0;
+    public static double getHeartHpRestored() {
+        return heartHpRestored;
+    }
+
+    /**
+     * Checks if heart item crafting is enabled.
+     *
+     * @return true if crafting is enabled
+     */
+    public static boolean isHeartRecipeEnabled() {
+        return heartRecipeEnabled;
+    }
+
+    /**
+     * Gets the crafting recipe pattern for heart items.
+     * <p>
+     * Each string represents a row in the 3x3 crafting grid.
+     *
+     * @return the recipe pattern
+     */
+    @NotNull
+    public static String[] getHeartRecipePattern() {
+        return heartRecipePattern;
+    }
+
+    /**
+     * Gets the materials used in the heart item recipe.
+     * <p>
+     * Maps pattern characters to Material types.
+     *
+     * @return the recipe materials map
+     */
+    @NotNull
+    public static Map<Character, Material> getHeartRecipeMaterials() {
+        return heartRecipeMaterials;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                           PUBLIC API - REVIVAL
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Checks if the revival feature is enabled.
+     *
+     * @return true if revival is enabled
+     */
+    public static boolean isRevivalEnabled() {
+        return revivalEnabled;
+    }
+
+    /**
+     * Gets the display name for revival items.
+     *
+     * @return the revival item display name
+     */
+    @NotNull
+    public static String getRevivalDisplayName() {
+        return revivalDisplayName;
+    }
+
+    /**
+     * Gets the item type for revival items.
+     *
+     * @return the revival item type (Material name)
+     */
+    @NotNull
+    public static String getRevivalItemType() {
+        return revivalItemType;
+    }
+
+    /**
+     * Gets the starting HP for revived players.
+     *
+     * @return the starting HP after revival
+     */
+    public static double getRevivalStartingHp() {
+        return revivalStartingHp;
+    }
+
+    /**
+     * Checks if revival item crafting is enabled.
+     *
+     * @return true if crafting is enabled
+     */
+    public static boolean isRevivalRecipeEnabled() {
+        return revivalRecipeEnabled;
+    }
+
+    /**
+     * Gets the crafting recipe pattern for revival items.
+     * <p>
+     * Each string represents a row in the 3x3 crafting grid.
+     *
+     * @return the recipe pattern
+     */
+    @NotNull
+    public static String[] getRevivalRecipePattern() {
+        return revivalRecipePattern;
+    }
+
+    /**
+     * Gets the materials used in the revival item recipe.
+     * <p>
+     * Maps pattern characters to Material types.
+     *
+     * @return the recipe materials map
+     */
+    @NotNull
+    public static Map<Character, Material> getRevivalRecipeMaterials() {
+        return revivalRecipeMaterials;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //                      PUBLIC API - ADVANCED OPTIONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Checks if the withdraw command is enabled.
+     * <p>
+     * When enabled, players can use /withdraw to convert HP into heart items.
+     *
+     * @return true if withdraw is enabled
+     */
+    public static boolean isWithdrawEnabled() {
+        return withdrawEnabled;
+    }
+
+    /**
+     * Checks if the plugin should override the keepInventory game rule.
+     * <p>
+     * When enabled, health changes apply even when keepInventory is true.
+     *
+     * @return true if keepInventory should be overridden
+     */
+    public static boolean shouldOverrideKeepInventory() {
+        return overrideKeepInventory;
     }
 }

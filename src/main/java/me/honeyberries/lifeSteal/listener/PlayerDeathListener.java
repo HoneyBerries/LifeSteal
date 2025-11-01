@@ -2,9 +2,11 @@ package me.honeyberries.lifeSteal.listener;
 
 import me.honeyberries.lifeSteal.LifeSteal;
 import me.honeyberries.lifeSteal.config.LifeStealSettings;
+import me.honeyberries.lifeSteal.util.EliminationManager;
 import me.honeyberries.lifeSteal.util.LifeStealUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+
 import org.bukkit.GameRule;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -14,11 +16,12 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.jetbrains.annotations.NotNull;
+
 import java.util.logging.Logger;
 
 /**
  * Handles player death events in the LifeSteal plugin.
- * This listener implements the mechanics for handling deaths caused by players or natural causes,
+ * This listener implements the mechanics for handling deaths caused by players or natural causes
  * and adjusts the maximum health of the involved players accordingly.
  */
 public class PlayerDeathListener implements Listener {
@@ -117,6 +120,9 @@ public class PlayerDeathListener implements Listener {
                 victim.getName(), LifeStealUtil.formatHealth(healthLost), LifeStealUtil.formatHealth(heartsLost), formatHearts(heartsLost)
             ));
         }
+        
+        // Check for elimination after health loss
+        checkForElimination(victim);
     }
 
     /**
@@ -152,6 +158,9 @@ public class PlayerDeathListener implements Listener {
                 killer.getName(), LifeStealUtil.formatHealth(healthGained), LifeStealUtil.formatHealth(heartsGained), formatHearts(heartsGained), victim.getName()
             ));
         }
+        
+        // Check for elimination after health loss
+        checkForElimination(victim);
     }
 
     private double calculateHealthLost(Player victim, double amountToLose) {
@@ -200,5 +209,29 @@ public class PlayerDeathListener implements Listener {
 
     private String formatHearts(double count) {
         return count == 1.0 ? "heart" : "hearts";
+    }
+
+    /**
+     * Checks if a player should be eliminated based on their current health and the elimination settings.
+     * If elimination is enabled and the player is at minimum health, they will be eliminated.
+     *
+     * @param player The player to check for elimination.
+     */
+    private void checkForElimination(@NotNull Player player) {
+        if (!LifeStealSettings.isUseElimination()) {
+            return; // Elimination is disabled
+        }
+
+        if (!LifeStealSettings.isMinHealthLimitEnabled()) {
+            return; // No minimum health limit, so no elimination
+        }
+
+        double currentHealth = LifeStealUtil.getMaxHealth(player);
+        double minHealth = LifeStealSettings.getMinHealthLimit();
+
+        // Check if the player is at or below minimum health
+        if (currentHealth <= minHealth) {
+            EliminationManager.eliminatePlayer(player);
+        }
     }
 }
