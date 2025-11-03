@@ -1,9 +1,31 @@
-# Maven target directory
+# =====================================
+# Build outputs
+# =====================================
+
+# Maven build output
 /target/
 
-# IntelliJ IDEA project files
+# Gradle local data and build output
+/.gradle/
+/build/
+
+# Common Java IDE build folder (Eclipse, VS Code Java plugin)
+ /bin/
+
+# =====================================
+# IDE and editor settings
+# =====================================
+
+# IntelliJ IDEA
 /.idea/
 /*.iml
+
+# VS Code
+.vscode/
+
+# =====================================
+# Generated and temporary files
+# =====================================
 
 # Logs
 *.log
@@ -20,30 +42,22 @@
 .DS_Store
 Thumbs.db
 
-# Temporary files
+# Temporary editor or swap files
 *.tmp
 *.swp
 *.swo
 
-# Git-specific files
+# Git merge leftovers
 *.orig
 
-# Maven-specific files
+# Maven-specific extras
 .mvn/
 .settings/
 dependency-reduced-pom.xml
 
-# Generated files
+# Generated code and reports
 generated-sources/
 generated-test-sources/
-
-# Test output
-/test-output/
-
-# Coverage reports
-/coverage/
+test-output/
+coverage/
 *.exec
-
-# Build tools
-/.gradle/
-/build/
